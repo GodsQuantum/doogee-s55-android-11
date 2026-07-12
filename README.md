@@ -208,13 +208,6 @@ Match `WIDTH HEIGHT` to your screen (S55 = 480×960). Keep frame count low on th
 | Endless boot animation, log shows `media.audio_policy` waiting | fstab `unlabeled` → nvram_daemon dies | `restorecon` the vendor fstab (step 8) |
 | Can't reach TWRP by keys | timing | From fastboot: `fastboot reboot recovery` |
 
-## Publish it — GitHub settings to fill in yourself
-Paste these when you create/edit the repo (About ⚙️ on the repo page):
-- **Description:**
-  `Rugged Doogee S55 (MediaTek MT6750, A-only) → clean, rooted, de-Googled crDroid 11 GSI. The working A-to-Z guide (EN/FR), with the SELinux/NVRAM fix nobody documents.`
-- **Topics:** `doogee-s55` `gsi` `crdroid` `mediatek` `mt6750` `treble` `android-11` `custom-rom` `degoogle` `twrp` `a-only` `off-grid`
-- Enable **Issues** so people can report their measured RAM/CPU and device revisions.
-
 ## Credits
 - [AndyYan](https://github.com/AndyCGYan) & [phhusson](https://github.com/phhusson) — GSI foundations.
 - [eremitein](https://github.com/eremitein/treble-patches) — crDRom11 (crDroid GSI) with legacy MediaTek fixes.
