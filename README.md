@@ -150,6 +150,26 @@ Done. 🎉
 
 ---
 
+## Reclaim your full internal storage (the ~800 MB trap)
+After `fastboot -w`, `/data` is often created at only **~800 MB instead of filling the 64 GB eMMC** — Settings → Storage will show ~3–4 GB total. Fix it **once, right after flashing, before you set up the phone** (this wipes `/data`, which is still empty). Old TWRP ships e2fsprogs 1.42.9 (2013) which **cannot `resize2fs`** the modern ext4 (`unsupported feature: quota`), so the reliable move is to reformat the partition to its full size:
+
+```bash
+# Boot to TWRP. First, confirm which block is userdata:
+$ADB shell "mount | grep -w /data"                 # e.g. /dev/block/mmcblk0p30
+# TWRP may mount userdata TWICE (/data AND /sdcard — a leftover if an SD was ever "adopted").
+# Force-unmount both, or e2fsck/mke2fs fail with "already in use" / error 8:
+$ADB shell "umount /sdcard 2>/dev/null; umount /data 2>/dev/null"
+# Reformat userdata to fill the WHOLE partition (no size given = full ~53 GB):
+$ADB shell "mke2fs -t ext4 /dev/block/mmcblk0p30"
+# Verify — Block count should jump from 204800 to ~14059515 (≈53 GB):
+$ADB shell "tune2fs -l /dev/block/mmcblk0p30 | grep -i 'Block count'"
+$ADB shell "reboot"
+```
+> ⚠️ Replace `mmcblk0p30` with **your** userdata block from the `mount | grep /data` line — numbers can differ.
+> First boot after this takes ~1–2 min (Android rebuilds `/data`). If you use an SD card, set it up as **Portable storage**, **not** "device / adoptable storage" — adopting it is exactly what cross-mounts `/data` onto `/sdcard` and blocks the resize.
+
+---
+
 ## The gotcha that cost a whole night
 If you edit the vendor fstab with `sed -i` and **don't** `restorecon` it, the file becomes SELinux `unlabeled`. Under **enforcing**, MediaTek's `nvram_daemon` can't read `/vendor/etc/fstab.mt6755`, so it dies (`exited with status 1`). The audio HAL (`audio.primary.mt6750.so`) then spins forever in `checkNvramReady()` waiting for NVRAM to become ready → `media.audio_policy` is never published → `system_server` waits → **boot never completes** (endless boot animation, no crash, no SELinux denial visible unless you dig).
 
@@ -158,6 +178,25 @@ If you edit the vendor fstab with `sed -i` and **don't** `restorecon` it, the fi
 $ADB root; $ADB shell "mount -o rw,remount /vendor; restorecon -Rv /vendor/etc/fstab.mt6755"
 ```
 This is already included in step 8. If you ever see an endless boot animation with `adb logcat` showing `Waiting for service 'media.audio_policy'`, this is your fix.
+
+---
+
+## Post-install fix: internal storage shows only a few hundred MB
+After flashing, `/data` may show only **~800 MB** on a 64 GB phone (Settings → Storage). Cause: `fastboot -w` created the userdata filesystem far smaller than the partition — on the S55 the userdata partition (`mmcblk0p30`) is ~53 GB, but the ext4 on it is tiny.
+
+The non-destructive fix *would* be `resize2fs`, **but TWRP 3.1.1 ships ancient e2fsprogs (1.42.9, 2013)** that can't handle the modern ext4 `quota` feature crDroid uses — `e2fsck`/`resize2fs` fail with *"unsupported feature(s): quota"* / *"Couldn't find valid filesystem superblock"*. Since nothing is installed yet, just **reformat /data to fill the whole partition** (this wipes /data — do it right after first boot, before installing anything).
+
+⚠️ TWRP's *Mount → uncheck Data* checkbox can **lie** — /data often stays mounted (also on `/sdcard`, a leftover of adopted-SD). Force-unmount from the CLI. In TWRP with ADB connected:
+```bash
+# Confirm your data block first:  adb shell df | grep /data     (on the S55 it's mmcblk0p30)
+adb shell "umount /sdcard 2>/dev/null; umount /data 2>/dev/null"
+adb shell "mke2fs -t ext4 /dev/block/mmcblk0p30"      # reformats /data across the WHOLE ~53 GB partition
+adb shell "tune2fs -l /dev/block/mmcblk0p30 | grep -iE 'Block count|Block size'"   # expect ~14059515 blocks
+adb shell reboot
+```
+First boot after this is a bit longer (Android rebuilds `/data`).
+
+**SD card:** always set it as **Portable storage**, never "Adoptable/internal" — adopting it puts crypto/mount locks on the internal partition (that's what caused the stuck mounts above and can corrupt blocks).
 
 ---
 
@@ -207,6 +246,12 @@ Match `WIDTH HEIGHT` to your screen (S55 = 480×960). Keep frame count low on th
 | Boot loops into factory-reset / recovery | /data still encrypted | Step 8 (decrypt fstab) + Step 9 (Format Data ext4) |
 | Endless boot animation, log shows `media.audio_policy` waiting | fstab `unlabeled` → nvram_daemon dies | `restorecon` the vendor fstab (step 8) |
 | Can't reach TWRP by keys | timing | From fastboot: `fastboot reboot recovery` |
+| Only ~800 MB–4 GB internal on a 64 GB phone | `fastboot -w` under-sized `/data` | [Reclaim your full internal storage](#reclaim-your-full-internal-storage-the-800-mb-trap) |
+| `e2fsck/resize2fs: unsupported feature(s): quota` in TWRP | 2013-era TWRP tools vs Android 11 ext4 | Don't resize — reformat with `mke2fs` (same section) |
+| `already in use` / error 8 on /data | userdata mounted twice (/data + /sdcard) | `umount /sdcard; umount /data` first |
+| Storage shows only ~hundreds of MB on a 64 GB phone | userdata fs not expanded; TWRP e2fsprogs too old to `resize2fs` (quota feature) | Force-unmount, then `mke2fs -t ext4 /dev/block/mmcblk0p30` (wipes /data). See "Post-install fix" |
+| `resize2fs`/`e2fsck` say `unsupported feature(s): quota` | TWRP 3.1.1 = e2fsprogs 1.42.9 (2013) | Don't fight it — reformat with `mke2fs` (above) |
+| `mke2fs` / resize says partition `already in use` | /data still mounted (also on /sdcard) despite TWRP's unchecked box | `umount /sdcard; umount /data` from CLI first |
 
 ## Credits
 - [AndyYan](https://github.com/AndyCGYan) & [phhusson](https://github.com/phhusson) — GSI foundations.
@@ -299,6 +344,32 @@ export PT="$HOME/platform-tools"; FB="$PT/fastboot"; ADB="$PT/adb"
 ```bash
 $ADB root; $ADB shell "mount -o rw,remount /vendor; restorecon -Rv /vendor/etc/fstab.mt6755"
 ```
+
+## Correctif post-install : le stockage n'affiche que quelques centaines de Mo
+Après le flash, `/data` peut n'afficher que **~800 Mo** sur un tel de 64 Go : `fastboot -w` a créé le filesystem bien plus petit que la partition (`mmcblk0p30` fait ~53 Go, mais l'ext4 dessus est minuscule). L'idéal serait `resize2fs`, **mais le TWRP 3.1.1 a un e2fsprogs de 2013 (1.42.9)** incapable de gérer la feature `quota` d'Android 11 (`unsupported feature(s): quota`). Comme rien n'est installé, on **reformate /data sur toute la partition** (efface /data — à faire juste après le 1er boot).
+
+⚠️ La case « Data » décochée dans TWRP **ment** : /data reste souvent monté (aussi sur `/sdcard`, résidu de SD adoptée). Démontage forcé obligatoire. Dans TWRP, ADB branché :
+```bash
+# vérifie ton bloc data :  adb shell df | grep /data     (S55 = mmcblk0p30)
+adb shell "umount /sdcard 2>/dev/null; umount /data 2>/dev/null"
+adb shell "mke2fs -t ext4 /dev/block/mmcblk0p30"     # reformate /data sur toute la partition (~53 Go)
+adb shell "tune2fs -l /dev/block/mmcblk0p30 | grep -iE 'Block count|Block size'"   # ~14059515 blocs attendus
+adb shell reboot
+```
+Le 1er boot suivant est un peu plus long (Android reconstruit `/data`).
+
+**Carte SD :** toujours en **stockage portable**, jamais « adoptable/interne » — l'adoption pose des verrous crypto sur la partition interne (c'est ce qui bloquait les démontages ci-dessus).
+
+## Récupérer tout le stockage interne (le piège des ~800 Mo)
+Après `fastboot -w`, `/data` est souvent créé à **~800 Mo au lieu de remplir les 64 Go** (Réglages → Stockage affiche ~3–4 Go). À corriger **une fois, juste après le flash, avant de configurer** (ça efface /data, encore vide). Le vieux TWRP (e2fsprogs 1.42.9) **ne peut pas `resize2fs`** l'ext4 moderne (`unsupported feature: quota`) → on reformate à pleine taille :
+```bash
+$ADB shell "mount | grep -w /data"                     # repère ton bloc userdata (ex: mmcblk0p30)
+$ADB shell "umount /sdcard 2>/dev/null; umount /data 2>/dev/null"   # /data est monté 2× (/data ET /sdcard) → démonter les deux
+$ADB shell "mke2fs -t ext4 /dev/block/mmcblk0p30"      # reformate sur TOUTE la partition (~53 Go)
+$ADB shell "tune2fs -l /dev/block/mmcblk0p30 | grep -i 'Block count'"   # ~14059515 blocs = ~53 Go
+$ADB shell "reboot"
+```
+> Remplace `mmcblk0p30` par TON bloc userdata. Carte SD : configure-la en **Stockage portable**, PAS en « stockage de l'appareil » (l'adoption est ce qui remonte /data sur /sdcard et bloque le resize).
 
 ## Changer / créer l'animation de démarrage
 - **Changer** : voir [`scripts/bootanim-replace.sh`](scripts/bootanim-replace.sh). L'écran Doogee/orange (bootloader) ne se change pas sans reverrouiller.
