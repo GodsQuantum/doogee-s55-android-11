@@ -59,10 +59,11 @@ This is a low-end SoC, so the goal isn't raw speed — it's **removing weight**.
 - The files in [`files/`](files/) of this repo:
   - `twrp-3.1.1-doogee-s55.img` — TWRP recovery for the S55.
   - `Disable_Dm-Verity_ForceEncrypt.zip` — [Zackptg5's](https://github.com/Zackptg5/Disable_Dm-Verity_ForceEncrypt) verity/forceencrypt disabler.
-- The **crDroid 11 GSI** (not bundled, ~700 MB):
-  `crdrom-v316-220330-arm64-avZ.img.xz` from
-  https://sourceforge.net/projects/treblerom/files/crDRom11/2022.03.30/
-  (`arm64` = CPU, `a` = **A-only**, `v` = vanilla/no-GApps, `Z` = dynamic root.)
+- The **crDroid 11 GSI** — **download it yourself** (it is *not* in this repo: it's ~700 MB and GitHub caps files at 100 MB; also, always get it from the maintainer so it stays current):
+  **File:** `crdrom-v316-220330-arm64-avZ.img.xz`
+  **Direct link:** https://sourceforge.net/projects/treblerom/files/crDRom11/2022.03.30/crdrom-v316-220330-arm64-avZ.img.xz/download
+  Name decoded: `arm64` = your CPU · `a` = **A-only** (mandatory for the S55) · `v` = vanilla / no Google apps · `Z` = dynamic root.
+  Want the Play Store built in instead? Use the `...-arm64-agZ.img.xz` variant from the same folder (`g` = GApps).
 
 Set an env var for the official fastboot/adb so the commands below are copy-paste ready:
 ```bash
@@ -73,6 +74,10 @@ FB="$PT/fastboot"; ADB="$PT/adb"
 ---
 
 ## The 10 steps that matter
+
+> **Two modes you switch between:** 🔧 **fastboot** (bootloader — for `fastboot` commands) and 🛠️ **TWRP recovery** (for sideload, Format Data, and the fstab fix). Each step says which one to be in. `$FB` = fastboot, `$ADB` = adb (both from Google's platform-tools). To go **fastboot → TWRP**: `$FB reboot recovery`. To go **TWRP → fastboot**: menu *Reboot → Bootloader*.
+>
+> Flow at a glance: `unlock → flash TWRP → (TWRP) sideload no-verity → (fastboot) flash system + -w → (TWRP) fix fstab + Format Data → reboot`.
 
 ### 1. Enable Developer options
 On the phone: Settings → About → tap *Build number* 7×. Then Developer options → enable **OEM unlocking** and **USB debugging**.
@@ -202,6 +207,13 @@ Match `WIDTH HEIGHT` to your screen (S55 = 480×960). Keep frame count low on th
 | Boot loops into factory-reset / recovery | /data still encrypted | Step 8 (decrypt fstab) + Step 9 (Format Data ext4) |
 | Endless boot animation, log shows `media.audio_policy` waiting | fstab `unlabeled` → nvram_daemon dies | `restorecon` the vendor fstab (step 8) |
 | Can't reach TWRP by keys | timing | From fastboot: `fastboot reboot recovery` |
+
+## Publish it — GitHub settings to fill in yourself
+Paste these when you create/edit the repo (About ⚙️ on the repo page):
+- **Description:**
+  `Rugged Doogee S55 (MediaTek MT6750, A-only) → clean, rooted, de-Googled crDroid 11 GSI. The working A-to-Z guide (EN/FR), with the SELinux/NVRAM fix nobody documents.`
+- **Topics:** `doogee-s55` `gsi` `crdroid` `mediatek` `mt6750` `treble` `android-11` `custom-rom` `degoogle` `twrp` `a-only` `off-grid`
+- Enable **Issues** so people can report their measured RAM/CPU and device revisions.
 
 ## Credits
 - [AndyYan](https://github.com/AndyCGYan) & [phhusson](https://github.com/phhusson) — GSI foundations.
