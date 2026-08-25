@@ -1,4 +1,4 @@
-# Doogee S55 Second Life — Technical notes
+# Doogee S55 — Android 11 Technical Notes
 
 [← README](../README.md) · [Fingerprint fix](FINGERPRINT-FIX.md)
 
@@ -7,7 +7,7 @@ These notes hold the low-level facts used by the user-facing guides so the insta
 ## 1. Validated device profile
 
 - Model: **Doogee S55** (not S55 Lite)
-- SoC family: MediaTek MT6750/MT6750T
+- SoC family: MediaTek MT6750 family / MT6750T
 - ISA/userspace: ARM64
 - Stock OS: Android 8.0 Oreo
 - Treble: enabled
@@ -44,6 +44,15 @@ Only the system/cache boundary moves. The start of userdata is preserved.
 The validated decompressed GApps image was larger than the stock p28 capacity. After repartition, `/system` was large enough for the image and `resize2fs` could expand its ext filesystem to the new block device size.
 
 `repartition-gapps.sh` deliberately refuses geometry that is neither the exact known stock layout nor the exact already-patched layout.
+
+### GPT rollback scope
+
+The GPT backup is a partition-table backup (`sgdisk --backup`), not a backup of the data stored inside `system` or `cache`.
+
+Before writing the GApps image to p28 or recreating p29, the saved table can restore the original partition boundaries with `sgdisk --load-backup=...`. Once the contents of p28/p29 have been changed, restoring the GPT alone is **not** a complete stock rollback: matching stock `system`/`cache` images (or the full stock firmware) must also be restored.
+
+This distinction matters because changing partition boundaries and changing filesystem contents are separate operations.
+
 
 ## 3. Why `/data` needed an Oreo vendor fix
 
@@ -120,7 +129,7 @@ AOSP defines `remaining_templates` as the number of **additional enumeration mes
 References:
 
 - https://android.googlesource.com/platform/hardware/libhardware/+/f1ccec1/include/hardware/fingerprint.h
-- https://android.googlesource.com/platform/hardware/interfaces/+/refs/heads/android16-release/biometrics/fingerprint/2.1/IBiometricsFingerprint.hal
+- https://android.googlesource.com/platform/hardware/interfaces/+/0dc66a2c6/biometrics/fingerprint/2.1/default/
 - https://android.googlesource.com/platform/hardware/interfaces/+/oreo-dr1-release/biometrics/fingerprint/2.1/default/BiometricsFingerprint.cpp
 
 ## 5. Fingerprint patch safety model

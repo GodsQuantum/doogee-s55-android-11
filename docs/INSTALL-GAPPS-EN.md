@@ -86,6 +86,24 @@ The script:
 
 Do not continue if the script rejects the geometry.
 
+### Rollback before flashing the GApps image
+
+If you decide to stop **after repartitioning but before writing p28 or recreating p29**, you can restore the GPT backup created by `repartition-gapps.sh`:
+
+```bash
+BACKUP="backups/gpt/S55-gpt-before-gapps-YYYYMMDD-HHMMSS.bin"
+$ADB push "$BACKUP" /tmp/s55-gpt-backup.bin
+$ADB shell 'sgdisk --load-backup=/tmp/s55-gpt-backup.bin /dev/block/mmcblk0
+sgdisk -v /dev/block/mmcblk0
+sync'
+$ADB reboot recovery
+```
+
+Replace the example filename with the backup actually printed by the script.
+
+> The GPT backup restores the **partition table only**. If you already wrote the GApps image to p28 or recreated p29, restoring the GPT alone is not a stock restore; reflash the matching stock `system`/`cache` images or the full stock firmware as well.
+
+
 ## 5. Decompress and flash the GApps image
 
 ```bash
@@ -99,7 +117,12 @@ The direct push to the block device is intentional and is the validated method a
 Expand the image filesystem to the new partition size and recreate cache:
 
 ```bash
-$ADB shell 'e2fsck -fy /dev/block/mmcblk0p28 || true
+$ADB shell 'e2fsck -fy /dev/block/mmcblk0p28
+rc=$?
+case "$rc" in
+  0|1|2) ;;
+  *) echo "e2fsck failed with code $rc" >&2; exit "$rc" ;;
+esac
 resize2fs /dev/block/mmcblk0p28
 mke2fs -t ext4 -L cache /dev/block/mmcblk0p29
 sync'

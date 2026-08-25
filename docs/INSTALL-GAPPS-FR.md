@@ -86,6 +86,24 @@ Le script :
 
 Ne continue pas si le script refuse la géométrie.
 
+### Retour arrière avant le flash de l'image GApps
+
+Si tu veux annuler **après le repartitionnement mais avant d'écrire p28 ou de recréer p29**, tu peux restaurer la sauvegarde GPT créée par `repartition-gapps.sh` :
+
+```bash
+BACKUP="backups/gpt/S55-gpt-before-gapps-YYYYMMDD-HHMMSS.bin"
+$ADB push "$BACKUP" /tmp/s55-gpt-backup.bin
+$ADB shell 'sgdisk --load-backup=/tmp/s55-gpt-backup.bin /dev/block/mmcblk0
+sgdisk -v /dev/block/mmcblk0
+sync'
+$ADB reboot recovery
+```
+
+Remplace le nom d'exemple par le fichier de sauvegarde réellement affiché par le script.
+
+> La sauvegarde GPT restaure **uniquement la table de partitions**. Si l'image GApps a déjà été écrite dans p28 ou si p29 a déjà été recréée, restaurer la GPT seule ne remet pas le téléphone en stock : il faut aussi reflasher les images stock `system`/`cache` correspondantes, ou le firmware stock complet.
+
+
 ## 5. Décompresser et flasher l'image GApps
 
 ```bash
@@ -99,7 +117,12 @@ Le `push` direct vers le block device est volontaire : c'est la méthode validé
 Agrandir ensuite le filesystem ext4 de l'image jusqu'à la nouvelle taille de la partition et recréer cache :
 
 ```bash
-$ADB shell 'e2fsck -fy /dev/block/mmcblk0p28 || true
+$ADB shell 'e2fsck -fy /dev/block/mmcblk0p28
+rc=$?
+case "$rc" in
+  0|1|2) ;;
+  *) echo "e2fsck a échoué avec le code $rc" >&2; exit "$rc" ;;
+esac
 resize2fs /dev/block/mmcblk0p28
 mke2fs -t ext4 -L cache /dev/block/mmcblk0p29
 sync'

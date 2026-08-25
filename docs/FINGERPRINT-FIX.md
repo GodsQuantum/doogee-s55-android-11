@@ -149,6 +149,6 @@ The script is hash-guarded and refuses unknown vendor binaries.
 ## References
 
 - Android fingerprint HAL contract: https://android.googlesource.com/platform/hardware/libhardware/+/f1ccec1/include/hardware/fingerprint.h
-- Fingerprint 2.1 interface: https://android.googlesource.com/platform/hardware/interfaces/+/refs/heads/android16-release/biometrics/fingerprint/2.1/IBiometricsFingerprint.hal
+- Fingerprint 2.1 interface: https://android.googlesource.com/platform/hardware/interfaces/+/0dc66a2c6/biometrics/fingerprint/2.1/default/
 - Oreo 2.1 callback bridge: https://android.googlesource.com/platform/hardware/interfaces/+/oreo-dr1-release/biometrics/fingerprint/2.1/default/BiometricsFingerprint.cpp
 - PHH/Treble common fixes: https://github.com/TadiT7/treble_experimentations_wiki/blob/master/Common-Issues-and-fixes.md

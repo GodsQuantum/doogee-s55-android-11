@@ -1,4 +1,4 @@
-# Doogee S55 — Android 8 → Android 11
+# Doogee S55 — Android 11 Upgrade Guide (crDroid GSI)
 
 **A tested upgrade path for the Doogee S55: stock Android 8 Oreo → crDroid 7.16 / Android 11, with either Vanilla or Google Apps, plus the device-specific fixes needed to make the old MediaTek vendor behave correctly.**
 
@@ -13,7 +13,7 @@
 | | Stock Doogee S55 | With this project |
 |---|---|---|
 | OS | Android 8.0 Oreo / DoogeeOS 2.0 | **crDroid 7.16 / Android 11** |
-| SoC | MediaTek MT6750T, ARM64 | Same hardware, newer userspace |
+| SoC | MediaTek MT6750 family / MT6750T, ARM64 | Same hardware, newer userspace |
 | RAM / storage | 4 GB / 64 GB eMMC | Same hardware, **full userdata restored** |
 | Display | 5.5" IPS, 1440×720 | Same panel |
 | Battery | 5500 mAh | Same battery |
@@ -92,7 +92,7 @@ The repository includes a guarded, idempotent script that patches **only the exa
 Upstream behavior references:
 
 - [Android fingerprint HAL contract: `remaining_templates`](https://android.googlesource.com/platform/hardware/libhardware/+/f1ccec1/include/hardware/fingerprint.h)
-- [Android 2.1 fingerprint HAL interface](https://android.googlesource.com/platform/hardware/interfaces/+/refs/heads/android16-release/biometrics/fingerprint/2.1/IBiometricsFingerprint.hal)
+- [Android 8-era HIDL fingerprint 2.1 legacy wrapper](https://android.googlesource.com/platform/hardware/interfaces/+/0dc66a2c6/biometrics/fingerprint/2.1/default/)
 - [PHH/Treble common fingerprint workaround](https://github.com/TadiT7/treble_experimentations_wiki/blob/master/Common-Issues-and-fixes.md)
 
 ---
@@ -163,5 +163,3 @@ Naming:
 - [eremitein / TrebleGSI](https://sourceforge.net/projects/treblerom/) — crDRom Android 11 images
 - [Zackptg5](https://github.com/Zackptg5) — Disable_Dm-Verity_ForceEncrypt
 - TWRP and the wider Treble community
-
-**Project name:** *Doogee S55 Second Life* — because this repository is about giving usable modern life to hardware abandoned on Android 8, not merely flashing another ROM.
