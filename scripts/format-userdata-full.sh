@@ -13,7 +13,7 @@ command -v "$ADB" >/dev/null 2>&1 || { echo "ERREUR: adb introuvable" >&2; exit 
 "$ADB" shell "test -b '$DATA_DEV'" || { echo "ERREUR: $DATA_DEV absent" >&2; exit 1; }
 
 P30_INFO="$("$ADB" shell "sgdisk -i 30 '$DISK'" | tr -d '\r')"
-P30_FIRST="$(awk -F: '/First sector/{gsub(/[^0-9]/,"",$2); print $2}' <<<"$P30_INFO")"
+P30_FIRST="$(awk -F: '/First sector/{sub(/^[[:space:]]*/,"",$2); split($2,a," "); print a[1]}' <<<"$P30_INFO")"
 
 [[ "$P30_FIRST" == "$EXPECTED_P30_FIRST" ]] || {
   echo "ERREUR: p30 commence au secteur ${P30_FIRST:-inconnu}, attendu $EXPECTED_P30_FIRST." >&2

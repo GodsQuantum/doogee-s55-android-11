@@ -15,8 +15,8 @@ command -v "$ADB" >/dev/null 2>&1 || { echo "ERREUR: adb introuvable" >&2; exit 
 part_bounds() {
   local n="$1" info first last
   info="$("$ADB" shell "sgdisk -i $n '$DISK'" | tr -d '\r')"
-  first="$(awk -F: '/First sector/{gsub(/[^0-9]/,"",$2); print $2}' <<<"$info")"
-  last="$(awk -F: '/Last sector/{gsub(/[^0-9]/,"",$2); print $2}' <<<"$info")"
+  first="$(awk -F: '/First sector/{sub(/^[[:space:]]*/,"",$2); split($2,a," "); print a[1]}' <<<"$info")"
+  last="$(awk -F: '/Last sector/{sub(/^[[:space:]]*/,"",$2); split($2,a," "); print a[1]}' <<<"$info")"
   printf '%s %s\n' "$first" "$last"
 }
 
