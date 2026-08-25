@@ -1,19 +1,21 @@
 #!/usr/bin/env bash
-# Build a valid bootanimation.zip from a folder.
-# The folder must contain: desc.txt, part0/ (PNG frames), part1/ (PNG frames).
-# desc.txt example (Doogee S55 screen = 480x960, 30 fps):
-#   480 960 30
-#   p 1 0 part0     # play part0 once, no pause
-#   p 0 0 part1     # loop part1 forever
-# Usage: ./make-bootanimation.sh <folder> [output.zip]
-set -euo pipefail
-SRC="${1:?Usage: make-bootanimation.sh <folder> [out.zip]}"
+set -Eeuo pipefail
+
+SRC="${1:-}"
 OUT="${2:-bootanimation.zip}"
+[[ -n "$SRC" && -d "$SRC" ]] || { echo "Usage: $0 <dossier-animation> [sortie.zip]" >&2; exit 1; }
+[[ -f "$SRC/desc.txt" ]] || { echo "ERREUR: $SRC/desc.txt absent" >&2; exit 1; }
+command -v zip >/dev/null 2>&1 || { echo "ERREUR: zip absent" >&2; exit 1; }
 
-[ -f "$SRC/desc.txt" ] || { echo "ERROR: $SRC/desc.txt missing"; exit 1; }
+read -r W H FPS < "$SRC/desc.txt"
+[[ "$W" =~ ^[0-9]+$ && "$H" =~ ^[0-9]+$ && "$FPS" =~ ^[0-9]+$ ]] || { echo "ERREUR: première ligne desc.txt invalide" >&2; exit 1; }
+if [[ "$W:$H" != "720:1440" ]]; then
+  echo "NOTE: le S55 est 720×1440 en portrait; desc.txt indique ${W}×${H}."
+fi
 
-# -0 = STORE (no compression) is MANDATORY for bootanimation.zip
-( cd "$SRC" && zip -r -0 -X "$OLDPWD/$OUT" desc.txt part* )
-
-echo ">> Created $OUT"
-echo ">> Install with: ./bootanim-replace.sh $OUT"
+rm -f "$OUT"
+(
+  cd "$SRC"
+  zip -0 -r "$OLDPWD/$OUT" desc.txt part* >/dev/null
+)
+echo "Créé: $OUT (ZIP STORE / sans compression)"
