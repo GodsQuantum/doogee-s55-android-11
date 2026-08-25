@@ -1,4 +1,4 @@
-# Doogee S55 Second Life — Android 8 → Android 11
+# Doogee S55 — Android 8 → Android 11
 
 **A tested upgrade path for the Doogee S55: stock Android 8 Oreo → crDroid 7.16 / Android 11, with either Vanilla or Google Apps, plus the device-specific fixes needed to make the old MediaTek vendor behave correctly.**
 
