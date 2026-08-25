@@ -62,6 +62,17 @@ printf '\n==> Backup GPT\n'
 "$ADB" pull "$REMOTE_BACKUP" "$LOCAL_BACKUP" >/dev/null
 sha256sum "$LOCAL_BACKUP"
 
+printf '\n==> Démontage system/cache\n'
+"$ADB" shell 'umount /system 2>/dev/null || true; umount /system_root 2>/dev/null || true; umount /cache 2>/dev/null || true; umount /dev/block/mmcblk0p28 2>/dev/null || true; umount /dev/block/mmcblk0p29 2>/dev/null || true'
+
+MOUNTED="$("$ADB" shell "grep -E 'mmcblk0p28|mmcblk0p29' /proc/mounts || true" | tr -d '\r')"
+
+if [[ -n "$MOUNTED" ]]; then
+  echo "ERREUR: p28 ou p29 est encore montée. Aucun repartitionnement effectué." >&2
+  printf '%s\n' "$MOUNTED" >&2
+  exit 1
+fi
+
 printf '\n==> Repartitionnement system/cache\n'
 "$ADB" shell "sgdisk \
   -d 28 -d 29 \
