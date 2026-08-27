@@ -17,12 +17,12 @@ This procedure upgrades a **stock Android 8 Doogee S55** to **crDroid 7.16 / And
 
 ## 0. Required files
 
-From this repository:
+Place these third-party files locally under `files/` (they are intentionally not tracked by this repository; see [`files/README.md`](../files/README.md)):
 
 - `files/twrp-3.1.1-doogee-s55.img`
 - `files/Disable_Dm-Verity_ForceEncrypt.zip`
 
-Download:
+Download the GSI:
 
 - `crdrom-v316-220330-arm64-agZ.img.xz`
 - https://sourceforge.net/projects/treblerom/files/crDRom11/2022.03.30/crdrom-v316-220330-arm64-agZ.img.xz/download

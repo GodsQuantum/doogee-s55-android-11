@@ -1,11 +1,16 @@
-# Big downloadable artifacts — link them in the README instead of committing
+# Generated/local backups
+backups/*
+!backups/.gitignore
+
+# Third-party device artifacts are local-only
+files/*
+!files/README.md
+
+# Large/downloaded/generated artifacts
 *.img
 *.img.xz
 *.img.gz
+*.zip
 *.zip.tmp
-platform-tools*/
 *.7z
-
-# Keep the two small bundled files in files/ (force-add if needed):
-!files/*.zip
-!files/*.img
+platform-tools*/

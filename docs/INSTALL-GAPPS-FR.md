@@ -17,12 +17,12 @@ Cette procédure part d'un **Doogee S55 stock Android 8** et installe **crDroid 
 
 ## 0. Fichiers requis
 
-Dans le dépôt :
+Place localement ces fichiers tiers sous `files/` (ils ne sont volontairement pas suivis par Git ; voir [`files/README.md`](../files/README.md)) :
 
 - `files/twrp-3.1.1-doogee-s55.img`
 - `files/Disable_Dm-Verity_ForceEncrypt.zip`
 
-À télécharger :
+À télécharger pour la GSI :
 
 - `crdrom-v316-220330-arm64-agZ.img.xz`
 - https://sourceforge.net/projects/treblerom/files/crDRom11/2022.03.30/crdrom-v316-220330-arm64-agZ.img.xz/download

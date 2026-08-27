@@ -10,6 +10,8 @@ Cette procédure installe **crDroid 7.16 / Android 11 sans Google Apps** sur le 
 
 ## 0. Fichiers requis
 
+Les fichiers TWRP et dm-verity/force-encryption ci-dessous sont des artefacts tiers locaux et ne sont volontairement pas suivis par Git. Voir [`files/README.md`](../files/README.md).
+
 - `files/twrp-3.1.1-doogee-s55.img`
 - `files/Disable_Dm-Verity_ForceEncrypt.zip`
 - `crdrom-v316-220330-arm64-avZ.img.xz`

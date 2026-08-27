@@ -119,6 +119,12 @@ Naming:
 
 ---
 
+## Third-party artifacts
+
+TWRP and `Disable_Dm-Verity_ForceEncrypt.zip` are intentionally **not redistributed or stored in Git**. Obtain them from sources you trust and place them locally under `files/` before following an installation guide. See [`files/README.md`](files/README.md) and [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
+
+---
+
 ## Repository map
 
 ```text
@@ -140,8 +146,7 @@ Naming:
 │   ├── bootanim-replace.sh
 │   └── make-bootanimation.sh
 └── files/
-    ├── twrp-3.1.1-doogee-s55.img
-    └── Disable_Dm-Verity_ForceEncrypt.zip
+    └── README.md   # third-party binaries are local-only / not tracked
 ```
 
 ---

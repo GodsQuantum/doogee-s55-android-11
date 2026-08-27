@@ -1,0 +1,27 @@
+name: Bug report
+description: Report a reproducible documentation or script problem
+title: "[bug] "
+labels:
+  - bug
+
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What happened?
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Device / environment
+      description: Include the exact model and relevant software versions. Redact personal identifiers.
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Redacted logs
+      description: Never include credentials, IMEI/MEID, account identifiers, private keys, or unredacted dumps.
