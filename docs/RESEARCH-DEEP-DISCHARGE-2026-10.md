@@ -1,5 +1,31 @@
 # DOOGEE S55 — Recherche ciblée « deep discharge » (09/10/2026)
 
+## 9 octobre 2026, 15 h 49 — DÉCISION APRÈS TEST BOOTLOADER EN DIRECT
+
+**Nouvelle preuve matérielle/firmware déterminante** : le S55 est toujours reconnu en fastboot sur Pegasus (serial vérifié). Une tentative UNIQUE de `fastboot boot` avec le TWRP 3.1.1 déjà testé et vérifié SHA256 `bbf6c46cb001f9b14c7476beb73f9d2ae4398619c3b855498cca1a8276436038` a été refusée **AVANT chargement** :
+
+```text
+Sending 'boot.img' (14110 KB) FAILED (remote: 'low power, need battery charging.')
+```
+
+Cette commande demande le lancement temporaire en RAM : **aucune partition flashée, pas de wipe et pas d'effacement**. Le refus vient **du bootloader natif** et non de crDroid, TWRP ou ADB. Il établit un niveau de charge jugé trop bas pour booter, **mais ne prouve pas quel composant empêche la recharge**.
+
+Le bootloader actif indique `off-mode-charge: 1` ; le kernel actif 2020 contient `CONFIG_MTK_KERNEL_POWER_OFF_CHARGING=y`, `CONFIG_MTK_SMART_BATTERY=y`, `CONFIG_MTK_HAFG_20=y`. Le ramdisk actif comprend charger/fuelgauged et les déclencheurs `on charger`. **Ne PAS désactiver les seuils de sous-tension pour permettre un boot artificiel.**
+
+**Fait externe corroborant :** discussion Doogee S55 datée de septembre 2018 (avant crDroid) signalant déjà un affichage « 0 % après deux heures de charge » — https://4pda.to/forum/index.php?showtopic=915045&st=100 . Ce n'est pas la preuve d'une défaillance identique, mais les difficultés de recharge existaient sur stock.
+
+### Réparation concrète à réaliser dans cet ordre (sans modification du téléphone par logiciel)
+
+1. **Contrôle électrique indispensable** : vérifier alimentation USB 5 V, chute de tension au port et **courant réel** entrant avec un instrument adapté, puis mesurer la tension de la batterie à vide et pendant un essai de charge, en respectant les consignes de sécurité Li-ion. Ne pas utiliser les 0 mV / 0 °C de `dumpsys battery` comme une mesure de cellule.
+2. Si le 5 V arrive correctement, que la cellule ne se charge pas, chute à la tentative de démarrage ou présente une résistance interne excessive : **remplacer la batterie**. Référence commerciale V715874P, nominal 3,8 V, 5 500 mAh, **à confirmer sur l'étiquette du téléphone**. Une batterie neuve d'origine récente est préférable à un stock ancien de 2018. Sources : https://www.pour-batterie.com/doogee-Batterie-v715874p-p6266.htm et https://www.movileo.com/s55 (catalogue batterie et module S55).
+3. Si le courant n'arrive pas jusqu'à la carte : inspecter/mesurer le **connecteur Micro-USB et la carte fille de charge**, réf. DOGS55-01 (https://www.fixshop.eu/spare-parts-cell-phone-spare-parts-connectors-charging-connector-pcb-board/doogee-s55-charging-connector-pcb-board/) ou équivalent S55 ; ne pas confondre avec S55 Lite sans vérification.
+4. Si batterie et port sont bons mais pas de courant de charge, diagnostic PMIC/NTC/flex par réparateur. **Ne pas alimenter de force une batterie lithium profondément déchargée** ni court-circuiter les protections.
+5. Après intervention physique, vérifier **charge sur secteur téléphone éteint**, démarrage autonome après faible charge, montée du pourcentage, capacité utile, Android et fingerprint. Ensuite seulement diagnostiquer les wakelocks/modem/Doze de crDroid pour l'autonomie.
+
+**Aucun remplacement logiciel au hasard n'est justifié** : les codes source MediaTek 3.18 confirment que KPOC est conditionné par l'état réel du chargeur, de la batterie et de sa température (https://android.googlesource.com/kernel/mediatek/+/android-mtk-3.18/drivers/power/mediatek/battery_common.c). Ne pas flasher les références 2018 ou 2019 : kernel actif compilé juin 2020 et correctifs vendor/fingerprint présents.
+
+**Dernier état :** le S55 était visible sur fastboot au diagnostic ; aucune modification matérielle ni réparation définitive n'a encore été effectuée. Les seules sauvegardes du projet concernent `boot`, `lk` et `lk2` (pas un backup complet de userdata ou vendor). Ne jamais les appeler « sauvegarde complète du téléphone ».
+
 ## Mise à jour : accès matériel et comparaison de la ROM ACTIVE (9 octobre 2026, 14:48–15:00)
 
 **Résultat du travail réel : lecture des partitions réussie, batterie non réparée.** MTKClient 2.1.4 (git `cd25cf9` du 12 septembre 2026) a pu se connecter au MT6750/MT6755, HW code 0x326, et lire la GPT. Son diagnostic indique SBC/SLA/DAA non activés. Il a ensuite lu SANS ÉCRIRE les partitions `boot` (16 Mio), `lk` (1 Mio) et `lk2` (1 Mio). La connexion au preloader était instable et le fastboot avait disparu avant toute demande de reboot ; aucune commande de reboot n'a été nécessaire pour cette lecture.
