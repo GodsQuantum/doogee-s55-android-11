@@ -51,6 +51,8 @@ The goal is not to hide these problems behind one-off commands. The guides expla
 
 **October 2026 update:** We are now evaluating newer Android versions and alternative operating systems alongside a battery/charging investigation. **Do not flash an Android 13+ SAR GSI directly onto this non-SAR S55.** The existing Android 11 guide remains the only on-device validated upgrade.
 
+- **[Android 13: hardware compatibility gate and LineageOS 18.1 fallback](docs/ANDROID13-FEASIBILITY-DECISION-2026-10.md):** exact local LineageOS 20 image fails the stock non-SAR/Oreo vendor gate; a boot/vendor port is needed before any meaningful on-device test.
+- **[Guarded LineageOS 18.1 flashing/rollback](scripts/flash-lineage18-s55.sh)** and **[Android 11 NikGapps Core installation](scripts/install-nikgapps-core11-s55.sh)**: exact private backups, partition/hash preflight, optional verified restoration; no radio/bootloader changes.
 - 🇫🇷 **[ROMs Android 11 à 17, GApps, Linux et tests réels — version française](docs/ROM-OPTIONS-FR.md)**
 - 🇬🇧 **[Android 11–17 ROM compatibility, Google apps, Linux alternatives and test matrix](docs/ROM-OPTIONS-EN.md)**
 - **[Read-only local image auditor](scripts/audit-rom-candidates.py):** inspect Android version, SAR/non-SAR layout, security patch and /system partition fit without flashing or mounting images.
