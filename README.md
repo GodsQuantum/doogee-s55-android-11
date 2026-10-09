@@ -57,6 +57,7 @@ The goal is not to hide these problems behind one-off commands. The guides expla
 | Android 11 **sans Google** | **[Installation Vanilla FR](docs/INSTALL-VANILLA-FR.md)** |
 | Corriger uniquement l'empreinte | **[Correctif MicroArray fingerprint](docs/FINGERPRINT-FIX.md#français)** |
 | Résoudre un problème | **[Dépannage](docs/TROUBLESHOOTING.md#français)** |
+| Batterie vide, bootloop ou recharge hors Android | **[Diagnostic batterie et charge](docs/BATTERY-CHARGING.md#français)** |
 | Comprendre les modifications bas niveau | **[Notes techniques](docs/TECHNICAL-NOTES.md)** |
 
 ### 🇬🇧 English
@@ -67,6 +68,7 @@ The goal is not to hide these problems behind one-off commands. The guides expla
 | Android 11 **without Google** | **[Vanilla installation EN](docs/INSTALL-VANILLA-EN.md)** |
 | Fix only the fingerprint issue | **[MicroArray fingerprint fix](docs/FINGERPRINT-FIX.md#english)** |
 | Diagnose a problem | **[Troubleshooting](docs/TROUBLESHOOTING.md#english)** |
+| Battery drain, deep discharge, offline charge | **[Battery & charging diagnostics](docs/BATTERY-CHARGING.md#english)** |
 | Understand the low-level changes | **[Technical notes](docs/TECHNICAL-NOTES.md)** |
 
 ---
