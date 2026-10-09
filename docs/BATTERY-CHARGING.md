@@ -2,6 +2,8 @@
 
 Status: 2026-10-09. Diagnosis ongoing; no firmware or hardware fix validated. This is NOT a flash guide.
 
+**Recherche octobre 2026 et ordre de réparation : [RESEARCH-DEEP-DISCHARGE-2026-10.md](RESEARCH-DEEP-DISCHARGE-2026-10.md)**. Vérifier cette analyse avant toute opération sur les partitions ; elle inclut les preuves KPOC des firmwares, le firmware constructeur 2019, les possibilités de sauvegarde en lecture seule et le diagnostic matériel.
+
 ### Mesures complémentaires confirmées — 9 octobre 2026, 14 h 05–14 h 21
 
 - Fastboot série `S550000000017268`, produit `K50V1_64`, bootloader déverrouillé ; `getvar off-mode-charge` et `getvar all` annoncent **`off-mode-charge: 1`**. La fonction de charge éteinte est déjà activée. Ne pas la désactiver avec `oem off-mode-charge 0`.
