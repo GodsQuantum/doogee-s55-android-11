@@ -1,5 +1,20 @@
 # DOOGEE S55 — Recherche ciblée « deep discharge » (09/10/2026)
 
+## 9 octobre 2026, 19:53–20:03 — essai de récupération 100 % USB sur Pegasus
+
+- USB absent à 19:53 ; les événements précédents montraient de longs cycles MediaTek Preloader (`0e8d:2000`), autre mode (`0e8d:2008`), puis fastboot (`0bb4:0c01`).
+- Script de surveillance USB temporaire sous Pegasus, ciblé sur le numéro de série connu, **un seul redémarrage fastboot par séquence**, aucun flash/erase.
+- Fastboot `reboot` accepté à 19:57:55, puis Android 11 GSI accessible ADB à 19:58:48. Le service Battery n'était pas prêt lors de l'énumération initiale.
+- À 19:59:10 `dumpsys battery` : USB powered=true, charge 1 %, tension=0, température=0, « max charging current »=415200 µA (limite déclarée, PAS courant réel). `adb root` explicitement refusé : « ADB Root access is disabled by system setting » ; fichiers `/sys/class/power_supply/battery/*` refusent l'accès au shell sans root. **Ne pas déduire une tension réelle nulle de la sortie Android.**
+- À 20:00:11 après boot complet `sys.boot_completed=1`, `settings put global low_power 1` a **réussi**, confirmé par `settings get global low_power = 1`. Écran mis en veille via `input keyevent 223`. La commande plus directe `cmd power set-mode 1` a échoué avec `SecurityException DEVICE_POWER` : ne pas la présenter comme ayant réussi.
+- À 20:00:58 `dumpsys battery` : niveau 0 % malgré `status=2` (charge en cours déclarée), USB powered=true, limite max USB annoncée 98900 µA. Android s'est déconnecté vers 20:01:13.
+- Second fastboot `reboot` à 20:02:15 accepté, Android/ADB récupéré 20:03:15.
+- À **20:03:19** commande `adb reboot charger` acceptée (exit=0, aucune partition écrite). USB MediaTek Preloader a brièvement été présent à 20:03:22–25, puis plus d'appareil USB visible à 20:03:29. **ATTENTION : acceptation de la commande =/= preuve que le mode charge éteint fonctionne ni que la batterie prend réellement du courant** ; vérifier l'absence de boucle USB et l'état de l'écran/charge.
+- Les fichiers de journal de ces tests sont dans `backups/device-2026-10-09/USB_CAPTURE_20261009.txt` et `USB_CHARGER_TRANSITION.log` (privés, ignorés par Git).
+- Contrôle supplémentaire à **20:04:21–20:04:41** : la commande `adb reboot charger` n'a PAS stabilisé le mode chargeur. Le même cycle MediaTek est revenu : preloader `0e8d:2000` (20:03:22–25), périphérique `0e8d:2008` (20:03:48–20:04:07), nouveau preloader (20:04:10–13) puis **fastboot `0bb4:0c01`** à 20:04:21. Ne pas assimiler code de retour ADB 0 à une charge rétablie. Aucune écriture sur la partition boot n'est justifiée.
+- Le téléphone est branché via le hub USB GenesysLogic `05e3:0610` sur Pegasus, appareil `1-5.1`. Le descripteur du hub indique **Self Powered** (autoalimenté). `bMaxPower` 100 mA du hub est sa propre consommation déclarée, **pas** une limite de courant de charge du smartphone. Les 98,9 à 583,5 mA de `dumpsys battery` sont des **limites négociées déclarées**, non la consommation réelle. Ne pas conclure que le hub est défectueux sur cette seule base.
+- Aucun contournement des protections batterie, aucun patch flash. `off-mode-charge=1` reste inchangé. Seules modifications persistantes côté Android : réglage natif `settings put global low_power 1`. La réparation de la charge **n'est pas obtenue**. Sans lecture valide de VBAT/charge effective, aucune raison sûre de flasher des partitions; si la panne vient de batterie/PMIC/USB, une intervention logicielle par câble ne peut pas la résoudre.
+
 ## 9 octobre 2026, 15 h 49 — DÉCISION APRÈS TEST BOOTLOADER EN DIRECT
 
 **Nouvelle preuve matérielle/firmware déterminante** : le S55 est toujours reconnu en fastboot sur Pegasus (serial vérifié). Une tentative UNIQUE de `fastboot boot` avec le TWRP 3.1.1 déjà testé et vérifié SHA256 `bbf6c46cb001f9b14c7476beb73f9d2ae4398619c3b855498cca1a8276436038` a été refusée **AVANT chargement** :
