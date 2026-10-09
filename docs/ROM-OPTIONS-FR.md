@@ -51,7 +51,7 @@ python3 scripts/audit-rom-candidates.py
 
 Le build `gsi_los20.img` déclare `lineage_arm64_bvN` et possède une racine SAR `/init` pointant vers `/system/bin/init`. L'image ext4 est marquée `shared_blocks`, donc **ne pas la monter/écrire directement**. La taille en dessous de /system ne la rend pas bootable.
 
-Le build `los18.img` est réellement non-SAR au niveau des fichiers de son image, malgré un libellé `ro.build.description` comportant « _bvS ». **L'anatomie du système prime sur un champ descriptif potentiellement générique.** Le fichier local compressé fait 617 124 608 octets, cohérent avec [AndyYan arm64_avS du 21 janvier 2024](https://sourceforge.net/projects/andyyan-gsi/files/lineage-18.x/) ; vérifier sa provenance cryptographique avant flash.
+Le build `los18.img` est réellement non-SAR au niveau des fichiers de son image, malgré un libellé `ro.build.description` comportant « _bvS ». **L'anatomie du système prime sur un champ descriptif potentiellement générique.** Le fichier local compressé fait 617 124 608 octets, son intégrité XZ est vérifiée, et sa décompression correspond octet pour octet à `los18.img` (SHA256 de l’image : `6ff112b937a5043aee862b48330a3895bb040461cdbe4304b342468600c7aaf5`), cohérent avec [AndyYan arm64_avS du 21 janvier 2024](https://sourceforge.net/projects/andyyan-gsi/files/lineage-18.x/) ; vérifier sa provenance cryptographique avant flash.
 
 Comparaison de builds AndyYan : [Lineage 18.1 janvier 2024](https://sourceforge.net/projects/andyyan-gsi/files/lineage-18.x/) et [LineageOS 20 octobre 2025](https://sourceforge.net/projects/andyyan-gsi/files/lineage-20-td/).
 
@@ -80,7 +80,15 @@ Les SHA256 sont **mesurés localement** ; pas de validation de signature publiqu
 - **Ubuntu Touch, Droidian, SailfishOS** : aucun port officiellement pris en charge et documenté pour le S55 confirmé dans cette recherche. Ne pas installer une image d'un autre MediaTek sous prétexte de SoC voisin. Sans pilote caméra, modem, power management, et boot compatibles, ce serait régressif.
 - **LineageOS spécifique S55** : aucune image moderne propre à l'appareil, maintenue et vérifiée, trouvée. Les *GSI* sont le seul chemin réaliste sans développer un device tree complet.
 
-## 6. Phase d'essais UNE FOIS la batterie suffisamment chargée
+## 6. Retours de spécialistes sur des incidents similaires
+
+Les mainteneurs de [PHH Treble ont documenté un cas très proche](https://github.com/phhusson/treble_experimentations/discussions/2393) : sur un Samsung A50 sous GSI Android 12.1, un utilisateur relatait qu'après une extinction par batterie vide, le branchement provoquait l'animation de démarrage Android à la place de l'animation de charge, puis un bootloop jusqu'à une combinaison de touches. **C'est une analogie, pas une preuve du même défaut sur le S55.** Elle justifie de tester explicitement le mode charge autonome après changement de ROM, et de ne pas se contenter de vérifier Android quand la batterie est pleine.
+
+Le [guide communautaire Treble](https://github.com/TadiT7/treble_experimentations_wiki/blob/master/Generic-System-Image-%28GSI%29-list.md) indique que ses GSI récentes sont **system-as-root par défaut**, sauf exception explicitement annoncée. Cette contrainte recoupe l'audit binaire de nos images. Les appareils Oreo ne peuvent pas recevoir une image SAR en remplaçant seulement `/system` sans adaptation du boot et du montage. Source : [AOSP, migration vers system-as-root](https://source.android.com/docs/core/architecture/partitions/system-as-root).
+
+Sur le S55, le fait nouveau essentiel est la **recharge sur chargeur secteur jusqu'à 20 %**, alors que la charge depuis Pegasus/Hub s'effondrait. **Première hypothèse testable** : différence de courant fourni et de négociation USB ; **deuxième** : logiciel de démarrage en mode charge ; **troisième** : jauge/calibration ou batterie vieillissante. Un firmware plus récent pourrait corriger une incompatibilité GSI mais **aucune preuve n'établit qu'il guérirait la charge**.
+
+## 7. Phase d'essais UNE FOIS la batterie suffisamment chargée
 
 1. **Sauvegardes supplémentaires avant wipe autorisé** : lire `vendor`, `recovery`, `nvram`, `nvdata`, GPT et informations de partitions. Sauvegardes privées et SHA256. Prendre aussi les `getprop` Treble/VNDK et un diagnostic de batterie (tension réelle du pilote si root autorisé).
 2. Mesurer la charge sous le chargeur secteur puis sous Pegasus : `dumpsys battery`, `dumpsys batterystats`, `dumpsys power`, `dumpsys deviceidle`, logs kernel avec permissions adéquates, recharge éteint. Ne pas interpréter 0 mV/0 °C Android comme des mesures de cellule.
@@ -89,13 +97,13 @@ Les SHA256 sont **mesurés localement** ; pas de validation de signature publiqu
 5. Comparer RAM, délais démarrage, ouverture apps, FPS/scroll, drain écran allumé et veille, reprises depuis veille, charge, température et stabilité. Garder **la ROM qui fonctionne**, pas nécessairement le plus grand numéro Android.
 6. Ensuite vérifier Android 14 plus léger ; ne pas multiplier les essais 15–17 si le socle vendor/boot n'a pas été fiabilisé.
 
-## 7. Fabricant et firmwares
+## 8. Fabricant et firmwares
 
 4PDA [Doogee S55 — firmware discussion](https://4pda.to/forum/index.php?showtopic=915045) liste des firmwares **2018** puis **8 novembre 2019**. La base ROM active utilise un kernel de juin 2020 (dump effectué sur cet appareil) et PhoneCopy [confirme un modem 2020](https://www.phonecopy.com/en/phones/view/doogee_s55) pour un S55. **Cela ne suffit pas à identifier un paquet constructeur complet de juin 2020 publiquement téléchargeable.** Aucun firmware constructeur Android 9+ n'a été vérifié pour le S55.
 
 **Ne pas flasher la ROM S55 Lite, ni un paquet stock antérieur au kernel actuel sans sauvegarde complète.**
 
-## 8. Réserve batterie / meilleure approche que « arrêt à 5 % »
+## 9. Réserve batterie / meilleure approche que « arrêt à 5 % »
 
 La charge sur **secteur à au moins 20 %** annoncée par le propriétaire change le diagnostic : le S55 **peut** recharger et il faut d'abord contrôler pourquoi la charge depuis Pegasus/Hub était si faible et pourquoi le fuel gauge a annoncé 0–1 %. Ne pas remplacer arbitrairement la batterie.
 
