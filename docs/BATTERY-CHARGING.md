@@ -2,6 +2,16 @@
 
 Status: 2026-10-09. Diagnosis ongoing; no firmware or hardware fix validated. This is NOT a flash guide.
 
+### Mesures complémentaires confirmées — 9 octobre 2026, 14 h 05–14 h 21
+
+- Fastboot série `S550000000017268`, produit `K50V1_64`, bootloader déverrouillé ; `getvar off-mode-charge` et `getvar all` annoncent **`off-mode-charge: 1`**. La fonction de charge éteinte est déjà activée. Ne pas la désactiver avec `oem off-mode-charge 0`.
+- Les deux fichiers `boot.img` constructeur ont une configuration kernel extraite et vérifiée : **`CONFIG_MTK_KERNEL_POWER_OFF_CHARGING=y`** pour juillet ET octobre 2018 ; les deux LK possèdent les routines KPOC. Le kernel actuellement flashé n'a pas été relu : sa configuration reste inconnue.
+- À 14 h 05, `fastboot reboot` accepté ; Android ADB accessible à 14 h 06, `sys.boot_completed=1`. `dumpsys battery` affichait **1 %**, USB powered=true, courant maximal rapporté variant de 398100 à 183500 µA, tension et température **0** (remontées anormales/invalides), santé déclarée GOOD. Accès direct `power_supply/battery` refusé à l'utilisateur ADB shell (SELinux/permissions).
+- À 14 h 14, `fastboot oem reboot-recovery` accepté mais n'a pas produit de session TWRP/ADB stable ; boucle d'énumération MTK preloader puis fastboot. À 14 h 18, un nouveau `fastboot reboot` a été tenté avec capture ADB préarmée ; le téléphone est retourné en fastboot après des passages préloader/MTP, sans capture ADB supplémentaire.
+- **Aucune opération de flash, erase, format, bootloader lock, changement du réglage de charge ni patch fingerprint.** `fastboot getvar battery-voltage`, `battery-soc`, `battery-current` et `battery-status` ne renvoient aucune mesure sur ce bootloader.
+- Diagnostic restant : déterminer si la **tension/capacité réelle** et le courant de charge évoluent, distinguer batterie usée/circuit de charge/câble de mode KPOC kernel et erreur de remontée du service Android. Une simple répétition de `off-mode-charge 1` ne peut pas être présentée comme un correctif.
+
+
 ## Français
 
 ### Constat vérifié
