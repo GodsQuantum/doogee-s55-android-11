@@ -42,7 +42,7 @@ python3 scripts/audit-rom-candidates.py
 | LineageOS 18.1 Android 11 | January 5, 2024 | **non-SAR** | 2,055,483,392 B | 1,151.7 MiB |
 | LineageOS 20 Android 13 | September 5, 2025 | **SAR** | 2,242,465,792 B | 973.4 MiB |
 
-The local LineageOS 18.1 image has a **non-SAR filesystem layout**, even though its compiled build description still contains `arm64_bvS`; inspect actual layout, not just the build description. Its 617.1 MB compressed file is consistent with AndyYan's January 21, 2024 ARM64 `avS` build; cryptographic provenance is **not independently verified**.
+The local LineageOS 18.1 image has a **non-SAR filesystem layout**, even though its compiled build description still contains `arm64_bvS`; inspect actual layout, not just the build description. Its 617.1 MB compressed file passed `xz -t`, and its decompressed bytes match `los18.img` exactly (image SHA256 `6ff112b937a5043aee862b48330a3895bb040461cdbe4304b342468600c7aaf5`); consistent with AndyYan's January 21, 2024 ARM64 `avS` build; cryptographic provenance is **not independently verified**.
 
 LineageOS 20 has a SAR root `/init` pointing to `/system/bin/init`, and the ext4 image has `shared_blocks` set. It also requires analysis of old VNDK libraries and legacy MediaTek HAL startup. **Fits in a partition != boots on this phone.**
 
@@ -61,6 +61,14 @@ These are locally computed checksums, **not independent signature verification**
 
 - **postmarketOS / upstream Linux:** no working DOOGEE S55 port was confirmed. Its [MT6750/MT6755 mainline status](https://wiki.postmarketos.org/wiki/MediaTek_Helio_P10_%28MT6755%29) still shows core features such as USB, storage, GPU, calls, camera, Wi-Fi and suspend broken. It is a development project, **not** a functional replacement phone OS.
 - **Ubuntu Touch, Droidian and SailfishOS:** no supported **device-specific S55 image** was confirmed. An image for another MT6750 device is not automatically compatible.
+
+## Comparable battery/charging failures reported by GSI users
+
+In the upstream [PHH Treble discussion for AOSP 12.1 v415](https://github.com/phhusson/treble_experimentations/discussions/2393), a Galaxy A50 user reported that connecting power after shutdown/empty battery triggered the **Android boot animation instead of the offline charging animation**, followed by a bootloop. **This is a comparable failure mode, not proof of the same root cause on the S55.** Offline charging must be tested separately from normal Android boot after every ROM experiment.
+
+The [Treble community GSI index](https://github.com/TadiT7/treble_experimentations_wiki/blob/master/Generic-System-Image-%28GSI%29-list.md) explicitly describes SAR as the default for its listed builds, except where marked otherwise. The corresponding AOSP [non-A/B system-as-root conversion](https://source.android.com/docs/core/architecture/partitions/system-as-root) requires changing how the kernel/init/system partitions boot, not simply flashing a newer image to /system.
+
+The reported 20% wall-charge recovery calls for **comparing PC/hub power negotiation to wall-adapter charging** before condemning the cell, and for validating the actual fuel-gauge signals once Android can run.
 
 ## Testing order after wall charging
 
