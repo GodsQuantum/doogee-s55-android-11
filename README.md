@@ -55,7 +55,9 @@ The goal is not to hide these problems behind one-off commands. The guides expla
 - 🇬🇧 **[Android 11–17 ROM compatibility, Google apps, Linux alternatives and test matrix](docs/ROM-OPTIONS-EN.md)**
 - **[Read-only local image auditor](scripts/audit-rom-candidates.py):** inspect Android version, SAR/non-SAR layout, security patch and /system partition fit without flashing or mounting images.
 - **[Battery and power-off charging investigation](docs/RESEARCH-DEEP-DISCHARGE-2026-10.md):** charging from a wall charger recovered to 20% according to the owner; the earlier PC USB/deep-discharge failures are not proof of an irreparably dead battery.
-- **[Battery, wakelocks, thermal HAL and read-only recovery audit — October 2026](docs/BATTERY-POWER-AUDIT-2026-10.md):** verified native power settings, historical standby data, thermal sensor permission errors, privately stored modem/vendor backups and the remaining recovery blocker.
+- **[Battery, wakelocks, thermal HAL and read-only recovery audit — October 2026](docs/BATTERY-POWER-AUDIT-2026-10.md):** verified native power settings and historical standby data; private modem/vendor backups.
+- **[Verified Android 11 ↔ Oreo vendor compatibility fixes](docs/ROOT-CAUSE-HEALTHD-VENDOR-2026-10.md):** repaired actual battery voltage readings, restored two missing stock vendor libraries and corrected legacy sensor ELF logging dependencies, with guarded rollback scripts.
+- **[Remaining thermal/SELinux audit](docs/THERMAL-SELINUX-INVESTIGATION-2026-10.md):** scoped read policy compiled off-device; **not installed**, and Android battery temperature remains unresolved.
 
 ### 🇫🇷 Français
 

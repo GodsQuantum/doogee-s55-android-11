@@ -97,6 +97,18 @@ Sur le S55, le fait nouveau essentiel est la **recharge sur chargeur secteur jus
 5. Comparer RAM, délais démarrage, ouverture apps, FPS/scroll, drain écran allumé et veille, reprises depuis veille, charge, température et stabilité. Garder **la ROM qui fonctionne**, pas nécessairement le plus grand numéro Android.
 6. Ensuite vérifier Android 14 plus léger ; ne pas multiplier les essais 15–17 si le socle vendor/boot n'a pas été fiabilisé.
 
+### Corrections matérielles à réintégrer dans toute nouvelle ROM
+
+Le diagnostic du 10 octobre a résolu plusieurs incompatibilités vérifiées entre **crDroid 11 et le vendor Oreo**. Ces éléments doivent être considérés comme des *exigences de compatibilité* pour les ROM futures, et non appliqués aveuglément à un autre binaire :
+
+- Chemin batterie ancien MediaTek `batt_vol` au lieu de `voltage_now` (healthd ARM64, version exacte uniquement) ; le contrôle physique de charge demeure natif
+- Bibliothèques constructeur de `ipsec_mon` et `gesturewake_hal` perdues par l'isolation des espaces de liens entre système et vendor
+- Exécutables ARM32 `msensord` et `memsicp` dépendant de `liblog.so` sans déclaration ELF correspondante
+- Politique thermique `proc_mtktz` manquante pour `hal_thermal_default` : correctif **seulement compilé hors téléphone, non déployé**
+- Patch fingerprint MicroArray à conserver sous contrôle de hash, ainsi que son contexte SELinux
+
+Les correctifs exacts, preuves de redémarrage et scripts de retour arrière sont documentés dans [l'audit Android 11/vendor](ROOT-CAUSE-HEALTHD-VENDOR-2026-10.md). **Une mise à jour Android 13/14/15+ devra réévaluer ces API par version**, plutôt que copier un healthd 2022 ou la politique Oreo sur un framework récent.
+
 ## 8. Fabricant et firmwares
 
 4PDA [Doogee S55 — firmware discussion](https://4pda.to/forum/index.php?showtopic=915045) liste des firmwares **2018** puis **8 novembre 2019**. La base ROM active utilise un kernel de juin 2020 (dump effectué sur cet appareil) et PhoneCopy [confirme un modem 2020](https://www.phonecopy.com/en/phones/view/doogee_s55) pour un S55. **Cela ne suffit pas à identifier un paquet constructeur complet de juin 2020 publiquement téléchargeable.** Aucun firmware constructeur Android 9+ n'a été vérifié pour le S55.
