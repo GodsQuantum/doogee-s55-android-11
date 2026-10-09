@@ -24,7 +24,9 @@ Le bootloader actif indique `off-mode-charge: 1` ; le kernel actif 2020 contient
 
 **Aucun remplacement logiciel au hasard n'est justifié** : les codes source MediaTek 3.18 confirment que KPOC est conditionné par l'état réel du chargeur, de la batterie et de sa température (https://android.googlesource.com/kernel/mediatek/+/android-mtk-3.18/drivers/power/mediatek/battery_common.c). Ne pas flasher les références 2018 ou 2019 : kernel actif compilé juin 2020 et correctifs vendor/fingerprint présents.
 
-**Dernier état :** le S55 était visible sur fastboot au diagnostic ; aucune modification matérielle ni réparation définitive n'a encore été effectuée. Les seules sauvegardes du projet concernent `boot`, `lk` et `lk2` (pas un backup complet de userdata ou vendor). Ne jamais les appeler « sauvegarde complète du téléphone ».
+**Pièces identifiées, à confirmer physiquement avant achat (tarifs affichés octobre 2026)** : Movileo Espagne référence une batterie d'origine S55 à **13,50 €** et une carte de charge + microphone S55 à **16,80 €** sur https://www.movileo.com/s55 ; il est essentiel d'obtenir une batterie réellement récente et non un stock vieilli. Autre batterie V715874P 3,8 V / 5500 mAh annoncée à **28,01 €** sur https://www.pour-batterie.com/doogee-Batterie-v715874p-p6266.htm ; carte de charge OEM DOGS55-01 sur https://www.fixshop.eu/spare-parts-cell-phone-spare-parts-connectors-charging-connector-pcb-board/doogee-s55-charging-connector-pcb-board/ (stock à confirmer). Éviter l'achat des deux pièces sans vérifier d'abord la tension au port et à la cellule. Une ouverture fragilise l'étanchéité IP68 ; joint à refaire et à tester.
+
+**Dernier état :** fastboot détecté à 15 h 49, puis absence de périphérique USB sur Pegasus à 15 h 51, sans commande de flash ni redémarrage supplémentaire. Aucune modification matérielle ni réparation définitive n'a encore été effectuée. Les seules sauvegardes du projet concernent `boot`, `lk` et `lk2` (pas un backup complet de userdata ou vendor). Ne jamais les appeler « sauvegarde complète du téléphone ».
 
 ## Mise à jour : accès matériel et comparaison de la ROM ACTIVE (9 octobre 2026, 14:48–15:00)
 
