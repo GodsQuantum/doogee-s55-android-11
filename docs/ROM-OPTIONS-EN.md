@@ -79,6 +79,12 @@ The reported 20% wall-charge recovery calls for **comparing PC/hub power negotia
 5. Profile benchmark outcomes and keep the actual winner. Do not assume a higher version runs faster on 4 GB RAM and MT6750.
 6. Consider Android 14+ only after SAR/vendor adaptation is proven.
 
+## Carry-forward requirements for newer Android builds
+
+The October 10 on-device audit uncovered and fixed several independently reproducible Android 11/Oreo-vendor incompatibilities: legacy MediaTek battery voltage property `batt_vol` instead of `voltage_now`, missing OEM HIDL/IMS linker libraries, undeclared ARM32 sensor `liblog.so` dependencies, and a still-unresolved `proc_mtktz` thermal HAL SELinux permission gap. The MicroArray fingerprint patch remains independently required. See [full per-file compatibility audit and rollback commands](ROOT-CAUSE-HEALTHD-VENDOR-2026-10.md).
+
+Any Android 13–17 port must account for these interfaces **with version-appropriate binaries and policies**; do not transplant the old Android 11 healthd executable or Oreo vendor sepolicy into a newer framework. The targeted thermal rule compiled offline but **was not installed on the phone**.
+
 ## Battery reservation policy
 
 For now, use the stock Android **Battery Saver trigger near 20%**, charge before 10%, and test the fuel gauge first. The user's suggested forced shutdown at an indicated **5% is not a physical reserve** if the battery estimator is unreliable; it could make recovery worse. The 20% native setting was prepared but **not yet applied** because ADB disappeared when the owner moved the phone to a wall charger.
