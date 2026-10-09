@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# DOOGEE S55 crDroid 7.16: guarded, reversible healthd battery-voltage path fix.
+# DOOGEE S55 Android 11 (crDroid 7.16 / Lineage 18.1): guarded healthd fix.
 # NO flash, format, repartition, global SELinux changes or kernel modifications.
 set -Eeuo pipefail
 export LC_ALL=C
@@ -12,11 +12,12 @@ usage() {
 MODE="$1"
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 BACKUP="$ROOT/backups/device-2026-10-10"
-SOURCE="$BACKUP/healthd-android11-original"
-PATCHED="$BACKUP/healthd-android11-voltage-patched"
-SOURCE_SHA="14f0dbbb8ae722df2da8f1b040a6412cc6541e0ac20fd37cc4b782e98a845ef3"
-PATCH_SHA="d364def27affe780131c22c3d5a89c60e73f7e3bba12b6093c235f3a69cc9b05"
 TARGET="/system/bin/healthd"
+# Select the exact matching OS binary only *after* querying the mounted phone.
+CRD_ORIG="14f0dbbb8ae722df2da8f1b040a6412cc6541e0ac20fd37cc4b782e98a845ef3"
+CRD_PATCH="d364def27affe780131c22c3d5a89c60e73f7e3bba12b6093c235f3a69cc9b05"
+LOS_ORIG="fc17574161e743e11c38e3d9d44b1c0b1bfdf04e946e78610dd69c80954c4215"
+LOS_PATCH="5f66b4c372d09eb84f2b23dadedaad0a53242bc44f31fdd7787a5467bee9e3ee"
 command -v adb >/dev/null || { echo "adb required" >&2; exit 1; }
 command -v sha256sum >/dev/null || { echo "sha256sum required" >&2; exit 1; }
 command -v python3 >/dev/null || { echo "python3 required" >&2; exit 1; }
@@ -40,6 +41,28 @@ CAPACITY="$("${ADB[@]}" shell "cat /sys/class/power_supply/battery/capacity" | t
 [[ "$CAPACITY" =~ ^[0-9]+$ && "$CAPACITY" -ge 30 ]] || {
   echo "Battery reported below 30%; refusing" >&2; exit 1;
 }
+# Ensure exact p28 block is mounted read-only, not an empty recovery directory.
+mounted="$("${ADB[@]}" shell 'mount | grep " on /system "' | tr -d '\r' || true)"
+if [[ -z "$mounted" ]]; then
+  "${ADB[@]}" shell 'mount -t ext4 -o ro,noload /dev/block/mmcblk0p28 /system'
+  mounted="$("${ADB[@]}" shell 'mount | grep " on /system "' | tr -d '\r' || true)"
+fi
+[[ "$mounted" == *"mmcblk0p28 on /system type ext4"* ]] || {
+  echo "Unexpected /system filesystem; refusing" >&2; exit 1;
+}
+CURRENT="$("${ADB[@]}" shell "sha256sum '$TARGET'" | tr -d '\r' | awk '{print $1}')"
+case "$CURRENT" in
+  "$CRD_ORIG"|"$CRD_PATCH")
+    SOURCE="$BACKUP/healthd-android11-original"
+    PATCHED="$BACKUP/healthd-android11-voltage-patched"
+    SOURCE_SHA="$CRD_ORIG"; PATCH_SHA="$CRD_PATCH"; ROM=crDroid11 ;;
+  "$LOS_ORIG"|"$LOS_PATCH")
+    SOURCE="$BACKUP/healthd-lineage18-original"
+    PATCHED="$BACKUP/healthd-lineage18-voltage-patched"
+    SOURCE_SHA="$LOS_ORIG"; PATCH_SHA="$LOS_PATCH"; ROM=Lineage18 ;;
+  *) echo "Unrecognized healthd: $CURRENT; refusing" >&2; exit 1 ;;
+esac
+echo "DETECTED_ROM $ROM"
 [[ -f "$SOURCE" ]] || { echo "Private original backup not present: $SOURCE" >&2; exit 1; }
 [[ "$(sha256sum "$SOURCE" | cut -d' ' -f1)" == "$SOURCE_SHA" ]] || {
   echo "Backup SHA256 mismatch" >&2; exit 1;
@@ -83,6 +106,10 @@ cleanup() {
   "${ADB[@]}" shell 'rm -f /tmp/s55-healthd-original /tmp/s55-healthd-patched' >/dev/null 2>&1 || true
 }
 trap cleanup EXIT
+actual_mount="$("${ADB[@]}" shell 'mount | grep " on /system "' | tr -d '\r' || true)"
+[[ "$actual_mount" == *"mmcblk0p28 on /system type ext4 (rw,"* ]] || {
+  echo "Cannot confirm exact /system read-write mount; refusing" >&2; exit 1;
+}
 
 # Writing into an existing inode preserves ownership, permission bits and xattrs.
 "${ADB[@]}" shell "cat '$REMOTE' > '$TARGET' && sync" || true

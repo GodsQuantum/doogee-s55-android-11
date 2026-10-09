@@ -59,7 +59,7 @@ if [[ "$MODE" == '--flash' ]]; then
   # Phone receives a raw filesystem. exec-in is tested for correct stdin delivery.
   pv -f -s "$IMAGE_BYTES" "$IMAGE" | "${ADB[@]}" exec-in "dd of=$PART bs=4194304 2>/dev/null || exit 2; sync"
   echo 'READBACK_SHA256: physical p28 image region'
-  actual="$("${ADB[@]}" exec-out "dd if=$PART bs=4096 count=$IMAGE_BLOCKS 2>/dev/null" | sha256sum | awk '{print $1}')"
+  actual="$("${ADB[@]}" shell "dd if=$PART bs=4096 count=$IMAGE_BLOCKS 2>/dev/null | sha256sum" | tr -d '\r' | awk '{print $1}')"
   [[ "$actual" == "$EXPECTED_IMAGE" ]] || die "Flash readback mismatch ($actual); DO NOT BOOT. Restore with --restore."
   echo 'FLASH_READBACK_MATCHED'
   echo 'GROWING EXT4 to full p28 partition for GApps'
@@ -73,7 +73,7 @@ else
   echo 'RESTORE PREVIOUS CRDROID SYSTEM FROM PRIVATE VERIFIED BACKUP'
   zstd -dc "$BACKUP" | "${ADB[@]}" exec-in "dd of=$PART bs=4194304 2>/dev/null || exit 2; sync"
   echo 'READBACK_SHA256: full p28'
-  actual="$("${ADB[@]}" exec-out "dd if=$PART bs=4096 count=$((SYSTEM_BYTES/4096)) 2>/dev/null" | sha256sum | awk '{print $1}')"
+  actual="$("${ADB[@]}" shell "dd if=$PART bs=4096 count=$((SYSTEM_BYTES/4096)) 2>/dev/null | sha256sum" | tr -d '\r' | awk '{print $1}')"
   [[ "$actual" == "$savedhash" ]] || die "Rollback readback mismatch ($actual), leave TWRP running"
   echo 'PREVIOUS_CRDROID_SYSTEM_RESTORED'
 fi
