@@ -16,3 +16,16 @@ They are ignored by Git and must not be committed.
   https://github.com/Zackptg5/Disable_Dm-Verity_ForceEncrypt
 
 Do not substitute an image intended for the S55 Lite or another MediaTek device.
+
+## October 2026 offline ROM/GApps candidate cache
+
+The `files/candidates/` directory is local-only and ignored by Git; binaries are **not redistributed** on GitHub. On Cloud9, these two original signed archives were downloaded directly from the NikGapps project's SourceForge mirror and validated with Python `zipfile.testzip()`:
+
+| OS to test | ZIP file | SHA256 from actual local file |
+|---|---|---|
+| Android 11 | `candidates/NikGapps-core-arm64-11-20260204-signed.zip` | `a56ad7da66e51a6cd1af0b0fb39a1ac167739161624115276b7f8d00633fd0f8` |
+| Android 13 | `candidates/NikGapps-core-arm64-13-20260204-signed.zip` | `d969df417bc3ea9c79e4219c8dd955d8d5f6d31597cbe5f88dc51518a3fc9613` |
+
+These SHA256 fingerprints are locally computed and do not independently authenticate the release signer. **Neither package has been installed on the phone.** Android 13 GApps are unsuitable for Android 11; do not double-install GApps on a prebundled GApps GSI.
+
+Full candidate ranking and next validation gates: [ROM options FR](../docs/ROM-OPTIONS-FR.md) and [ROM options EN](../docs/ROM-OPTIONS-EN.md).

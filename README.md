@@ -49,6 +49,13 @@ The goal is not to hide these problems behind one-off commands. The guides expla
 
 ## Choose your path
 
+**October 2026 update:** We are now evaluating newer Android versions and alternative operating systems alongside a battery/charging investigation. **Do not flash an Android 13+ SAR GSI directly onto this non-SAR S55.** The existing Android 11 guide remains the only on-device validated upgrade.
+
+- 🇫🇷 **[ROMs Android 11 à 17, GApps, Linux et tests réels — version française](docs/ROM-OPTIONS-FR.md)**
+- 🇬🇧 **[Android 11–17 ROM compatibility, Google apps, Linux alternatives and test matrix](docs/ROM-OPTIONS-EN.md)**
+- **[Read-only local image auditor](scripts/audit-rom-candidates.py):** inspect Android version, SAR/non-SAR layout, security patch and /system partition fit without flashing or mounting images.
+- **[Battery and power-off charging investigation](docs/RESEARCH-DEEP-DISCHARGE-2026-10.md):** charging from a wall charger recovered to 20% according to the owner; the earlier PC USB/deep-discharge failures are not proof of an irreparably dead battery.
+
 ### 🇫🇷 Français
 
 | I want… | Guide |
