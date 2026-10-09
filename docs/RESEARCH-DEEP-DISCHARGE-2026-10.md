@@ -90,7 +90,7 @@ Ramdisk actif contient `sbin/charger` (833 928 octets), `sbin/fuelgauged_static`
 
 ## 2. Investigation read-only des 2 firmwares stock locaux
 
-Sous /srv/storage/cloud/arezki/Projets/Phones/Doogee S55/Doogee S55 :
+Sous dossier local des firmwares stock S55 :
 - Firmware juillet 2018 et octobre 2018 (deux jeux boot.img + lk.img + vendor.img ; NE PAS FLASHER À L'AVEUGLE).
 - Config Linux kernel extraite directement des deux boot.img avec extract-ikconfig :
   - CONFIG_MTK_SMART_BATTERY=y
