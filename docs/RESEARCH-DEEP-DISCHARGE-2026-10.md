@@ -1,5 +1,31 @@
 # DOOGEE S55 — Recherche ciblée « deep discharge » (09/10/2026)
 
+## Mise à jour : accès matériel et comparaison de la ROM ACTIVE (9 octobre 2026, 14:48–15:00)
+
+**Résultat du travail réel : lecture des partitions réussie, batterie non réparée.** MTKClient 2.1.4 (git `cd25cf9` du 12 septembre 2026) a pu se connecter au MT6750/MT6755, HW code 0x326, et lire la GPT. Son diagnostic indique SBC/SLA/DAA non activés. Il a ensuite lu SANS ÉCRIRE les partitions `boot` (16 Mio), `lk` (1 Mio) et `lk2` (1 Mio). La connexion au preloader était instable et le fastboot avait disparu avant toute demande de reboot ; aucune commande de reboot n'a été nécessaire pour cette lecture.
+
+Les fichiers sont stockés **uniquement en sauvegarde privée ignorée par Git** dans `backups/device-2026-10-09/`. Le fichier `SHA256SUMS` est relatif au dossier, les vérifications Cloud9 sont OK, permissions 0600, propriétaire arezki. Ne PAS les publier.
+
+- boot : SHA256 `a2e6c0db60b2ecc22fe4fb42e2ca2db03b55188d44f195361e36c5dd6873f5ab`
+- lk = lk2 : SHA256 `5fe80cc3990fbe26f2f301792243c683ae9e976736f2b7bb9b7194e32bbb7dbc`
+- Analyse reproductible : `python3 scripts/analyze-s55-active-boot.py`, aucune extraction ou écriture sur le smartphone.
+
+**Kernel actif : Linux 3.18.60+ compilé le 29 juin 2020 (20:02:29 CST).** Il est PLUS RÉCENT que les références stock juillet/octobre 2018 et que le firmware 2019 mentionné ci-dessous. Une source indépendante documente un DOOGEE S55 utilisant un firmware/modem de juin 2020 : https://www.phonecopy.com/en/phones/view/doogee_s55 . Ne pas supposer pour autant une correspondance bit-à-bit entre les versions sans firmware complet validé.
+
+Configuration **vérifiée dans le vrai kernel actif** par décompression puis IKCONFIG (identique sur ces points aux stock 2018) :
+- `CONFIG_POWER_SUPPLY=y`
+- `CONFIG_MTK_SMART_BATTERY=y`
+- `CONFIG_MTK_KERNEL_POWER_OFF_CHARGING=y`
+- `CONFIG_MTK_HAFG_20=y`
+
+Ramdisk actif contient `sbin/charger` (833 928 octets), `sbin/fuelgauged_static` (492 344 octets), `init.rc` avec `on charger` → `class_start charger` et le déclencheur `sys.boot_from_charger_mode=1`. Les binaires charger et fuel gauge actifs sont différents des références 2018, **sans preuve de dysfonctionnement**. Le kernel et le ramdisk sont eux aussi différents. `lk` et `lk2` actifs sont identiques et contiennent les routines et protections basse tension KPOC.
+
+**Conclusion mise à jour :** la panne n'est PAS due à l'absence de KPOC, de fuel gauge, de ramdisk charger ou à `off-mode-charge=0`. Elle peut venir d'une exécution défaillante de ces services, d'une batterie âgée/de haute résistance interne, du port/circuit de charge ou d'une télémétrie Health HAL inadaptée à Android 11. La tension=0 et la température=0 de `dumpsys battery` sont **invalides** et ne constituent PAS une mesure physique de la cellule. Ni l'usure de la batterie ni le défaut PMIC ne sont prouvés.
+
+**Décision : AUCUN FLASH de boot, lk, preloader, vendor ou GSI** tant que la capacité de charge réelle n'est pas mesurée. Écarter la ROM 2019 comme « mise à niveau » : elle est antérieure au kernel actuellement installé. Préserver en priorité fingerprint, partitionnement et données. Suite sûre : mesure du courant USB et tension de la cellule à la prise de charge (par un professionnel si appareil de mesure absent), puis diagnostic Android du fuel gauge et des wakelocks uniquement quand le téléphone peut démarrer de façon stable.
+
+## Historique de l'enquête et hypothèses
+
 État : **non résolu**. S55 en fastboot sur Pegasus à 14:27 le 09/10. Aucune écriture sur le téléphone autorisée avant vérification des tensions et du boot réellement installé. Ne pas confondre les firmwares de référence et les partitions *actives*.
 
 ## 1. Faits mesurés sur le S55
