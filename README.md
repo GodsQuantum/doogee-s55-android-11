@@ -55,6 +55,7 @@ The goal is not to hide these problems behind one-off commands. The guides expla
 - 🇬🇧 **[Android 11–17 ROM compatibility, Google apps, Linux alternatives and test matrix](docs/ROM-OPTIONS-EN.md)**
 - **[Read-only local image auditor](scripts/audit-rom-candidates.py):** inspect Android version, SAR/non-SAR layout, security patch and /system partition fit without flashing or mounting images.
 - **[Battery and power-off charging investigation](docs/RESEARCH-DEEP-DISCHARGE-2026-10.md):** charging from a wall charger recovered to 20% according to the owner; the earlier PC USB/deep-discharge failures are not proof of an irreparably dead battery.
+- **[Battery, wakelocks, thermal HAL and read-only recovery audit — October 2026](docs/BATTERY-POWER-AUDIT-2026-10.md):** verified native power settings, historical standby data, thermal sensor permission errors, privately stored modem/vendor backups and the remaining recovery blocker.
 
 ### 🇫🇷 Français
 
