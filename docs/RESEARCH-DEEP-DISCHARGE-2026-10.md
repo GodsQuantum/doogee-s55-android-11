@@ -1,5 +1,14 @@
 # DOOGEE S55 — Recherche ciblée « deep discharge » (09/10/2026)
 
+## 9 octobre 2026, 20:10–20:15 — redémarrage demandé pour chargeur secteur, réserve envisagée
+
+- À 20:10:41, Pegasus ne détectait pas de fastboot mais un appareil MediaTek `0e8d:2008`. Un script temporaire de surveillance n'a exécuté **qu'un seul** `fastboot reboot` dès que le S55 est apparu.
+- **20:11:58 :** fastboot trouvé, `fastboot reboot` **OKAY**. À 20:12:01–20:12:04, Pegasus a vu `0e8d:2000` (Preloader), puis **aucun périphérique USB** jusqu'au contrôle 20:14:59. Cela ne prouve PAS qu'Android a terminé de démarrer : l'utilisateur prévoit de brancher immédiatement le téléphone sur un chargeur secteur.
+- Paramètre natif à configurer **après recharge / prochain ADB Android autorisé** : `settings put global automatic_power_save_mode 0`, `settings put global low_power_trigger_level 20`, puis vérifier avec `settings get global ...`. AOSP confirme que `0` signifie mode automatique par pourcentage et que `low_power_trigger_level` active Battery Saver au seuil choisi. Source officielle : https://android.googlesource.com/platform/frameworks/base/+/master/services/core/java/com/android/server/power/batterysaver/BatterySaverStateMachine.java ; https://android.googlesource.com/platform/frameworks/base/+/e79bd4da196c56cd5610032e705f1261d97f6559/core/java/android/provider/Settings.java .
+- À 20:14:59, ADB était absent : **paramétrage 20 % PAS APPLIQUÉ**, simplement préparé. L'ancien `settings put global low_power 1` de 20:00 est susceptible d'être remis à zéro au redémarrage par BatterySaverStateMachine. Ne pas prétendre qu'il reste actif sans vérification.
+- **Demande utilisateur :** conserver environ 5 % de batterie de réserve en éteignant tôt. Un économiseur automatique à 20 % ne garantit pas 5 % de charge physique. Le capteur d'état de charge étant actuellement incohérent (0–1 %, 0 mV/0 °C dans BatteryService), créer un arrêt automatique à 5 % ou déplacer les seuils de protection PMIC serait dangereux. Priorité à une jauge de capacité fiable, puis possibilité d'alerter vers 15 % et d'éteindre proprement vers 10 % uniquement avec dispositif validé, sans daemon custom par défaut.
+- Chargeur constructeur S55 : 5 V / 2 A Micro-USB ; un adaptateur « rapide » 9 V/PD n'augmente pas magiquement la puissance du S55. Références : https://www.hifitest.de/test/ausstattungsliste/smartphones/doogee-s55-52014 et https://www.igeekphone.com/doogee-s55-hands-on-review-a-5-5-rugged-ip68-smartphone-in-18-9-display-with-large-battery/ . Pas de manipulation ni mesure à demander à l'utilisateur pendant le passage urgent au chargeur.
+
 ## 9 octobre 2026, 19:53–20:03 — essai de récupération 100 % USB sur Pegasus
 
 - USB absent à 19:53 ; les événements précédents montraient de longs cycles MediaTek Preloader (`0e8d:2000`), autre mode (`0e8d:2008`), puis fastboot (`0bb4:0c01`).
