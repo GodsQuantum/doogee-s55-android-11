@@ -20,6 +20,8 @@ def main() -> None:
     assert "INSTALL-S55-ERASE-ALL" in installer
     assert "UNLOCK-S55" in installer
     assert "private-install-state" in installer
+    assert "prepare-lineage18-userdata-s55.sh" in installer
+    assert installer.index('if [[ ! -e "$BACK/data.ok" ]]') < installer.index('if [[ ! -e "$BACK/gapps.ok" ]]')
     assert "nvram nvdata protect1 protect2" in installer
     assert "flash preloader" not in installer.lower()
     assert "boot-tested-s55.img" in builder and "vendor-s55-known-good.img.zst" in builder

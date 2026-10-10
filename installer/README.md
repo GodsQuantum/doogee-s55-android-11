@@ -34,7 +34,7 @@ For a non-destructive look at the installation plan:
 ./INSTALL.sh --check
 ```
 
-**Human interaction cannot be removed from OEM unlocking, physical key combinations, USB authorization and the initial fingerprint enrollment.** If an image, device signature, checksum or geometry does not match, the installer must refuse to flash it. No universal promise is made for unknown board revisions or modified S55 firmware.
+**Human interaction cannot be removed from OEM unlocking, physical key combinations, USB authorization and the initial fingerprint enrollment.** After erasing userdata, Android normally disables USB debugging again: complete the first-run setup, re-enable Developer Options → USB debugging, and authorize the same computer when the installer requests it. The script then verifies Android 11, Google packages, real thermal sensors and the 25% battery-saver setting. If ADB is still unavailable, the script may record only a user-confirmed visible boot, explicitly marked **unverified**; it will never silently report completed automated tests. If an image, checksum or GPT geometry does not match, installation stops. No universal promise is made for unknown board revisions.
 
 ## What's inside the local kit
 

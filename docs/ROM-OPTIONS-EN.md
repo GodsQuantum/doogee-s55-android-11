@@ -83,7 +83,7 @@ The reported 20% wall-charge recovery calls for **comparing PC/hub power negotia
 
 The October 10 on-device audit uncovered and fixed several independently reproducible Android 11/Oreo-vendor incompatibilities: legacy MediaTek battery voltage property `batt_vol` instead of `voltage_now`, missing OEM HIDL/IMS linker libraries, undeclared ARM32 sensor `liblog.so` dependencies, and a still-unresolved `proc_mtktz` thermal HAL SELinux permission gap. The MicroArray fingerprint patch remains independently required. See [full per-file compatibility audit and rollback commands](ROOT-CAUSE-HEALTHD-VENDOR-2026-10.md).
 
-Any Android 13–17 port must account for these interfaces **with version-appropriate binaries and policies**; do not transplant the old Android 11 healthd executable or Oreo vendor sepolicy into a newer framework. The targeted thermal rule compiled offline but **was not installed on the phone**.
+Any Android 13–17 port must account for these interfaces **with version-appropriate binaries and policies**; do not transplant the old Android 11 healthd executable or Oreo vendor sepolicy into a newer framework. **10 October update:** the Android 11-targeted SELinux read-only thermal rules were later installed and verified on the real phone. They are **not portable** to Android 13+ without revalidation.
 
 ## Battery reservation policy
 

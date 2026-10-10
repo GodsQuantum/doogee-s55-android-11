@@ -56,7 +56,7 @@ Sources : DOOGEE FAQ https://www.doogee.com/pages/faq ; Notebookcheck S55 https:
 
 ## English
 
-The S55 shows a deep-discharge / bootloop issue that is **not yet resolved**. The stock LK images contain offline-charging (KPOC) functionality, but the active kernel/bootloader, battery voltage and charge current have not yet been verified.
+The S55 shows a deep-discharge / bootloop issue that is **not yet resolved**. The stock LK images contain offline-charging (KPOC) functionality, but the active 2020 kernel, KPOC, bootloader flags, actual battery temperature and live battery voltage **have since been verified** (see BATTERY-THERMAL-LINEAGE18-2026-10.md); a physical deep-discharge recovery guarantee remains unavailable.
 
 Use a known-good **5 V / 2 A Micro-USB wall charger** and cable for at least 30–60 minutes, without repeatedly forcing a reboot. Inspect the battery/port and stop if overheated, swollen or damaged. Record if the charging icon is stable or the phone restarts spontaneously. A computer USB port may not provide the same charging current.
 

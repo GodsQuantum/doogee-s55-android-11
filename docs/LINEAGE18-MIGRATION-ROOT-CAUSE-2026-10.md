@@ -47,7 +47,7 @@ Recovery error logs, pstore, dropbox and live logcat are kept **privately** at `
 | Fingerprint | Fingerprint manager and MicroArray patch preserved, no HAL death in initial run | After userdata format zero enrolled fingers; must enroll and verify twice |
 | Wi-Fi/Bluetooth | Wi-Fi enabled, Bluetooth in ON state | One Bluetooth database crash occurred early in the first successful boot, then service recovered |
 | Mobile radio | Radio service running | No SIM inserted in either slot; calls/data not testable |
-| Thermal | Kernel thermal nodes exist | Thermal HAL SELinux access candidate only tested offline; not installed |
+| Thermal | Kernel thermal nodes exist | Thermal HAL repaired and validated after this migration; see BATTERY-THERMAL-LINEAGE18-2026-10.md |
 | Security | SELinux Enforcing | On this legacy setup `ro.crypto.state=unsupported`; do not imply modern at-rest device encryption |
 
 ## Restoration
