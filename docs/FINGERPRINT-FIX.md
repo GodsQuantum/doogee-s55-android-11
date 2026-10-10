@@ -6,13 +6,27 @@ The old patched MicroArray library alone did not prove fingerprint persistence a
 
 **Combined mitigation now applied:** keep the SHA256-guarded MicroArray enumeration fix AND set persist.sys.phh.fingerprint.nocleanup=true in the installed PHH Android 11 framework. The deployed services.jar has this feature. The property requires privileged ADB on this build; ordinary ADB shell cannot set it.
 
-An actual finger was enrolled, and one registered fingerprint remained after a controlled full reboot (Android user unlocked, system fully booted). The HAL did not die, SELinux remained Enforcing, and the PHH property persisted. **Physical fingerprint unlock after reboot and stability across additional reboots remain unverified** as of this checkpoint (accept=0). Do not claim this proves successful fingerprint unlocking.
+An actual finger was enrolled, and one registered fingerprint remained after a controlled full reboot (Android user unlocked, system fully booted). The HAL did not die, SELinux remained Enforcing, and the PHH property persisted. **Later 10 October 2026, owner acceptance:** after this controlled reboot the owner physically tested the enrolled finger and CONFIRMED successful fingerprint unlocking. This completes the functional post-reboot test on the reference DOOGEE S55 with the combined vendor patch + PHH property. The earlier accept=0 snapshot was taken BEFORE that physical test; it was not a failed authentication. Long-term durability across future upgrades and other S55 units remains unverified.
 
 The guarded helper scripts/enable-microarray-persistence.sh supports --check and --apply, refuses wrong vendor/Android/HAL hash and immediately returns adbd to non-root after a privileged change. No biometric template files are read, exported or erased. PHH no-cleanup can leave orphaned fingerprint metadata when framework and HAL disagree, so use it only with a validated enumerator fix, and verify physical unlock.
 
 ---
 
 [← README](../README.md) · [Technical notes](TECHNICAL-NOTES.md) · [`fix-microarray-fingerprint.sh`](../scripts/fix-microarray-fingerprint.sh)
+
+## Validation finale sur le téléphone de référence — 10 octobre 2026
+
+**RÉSULTAT : déverrouillage par empreinte fonctionnel après redémarrage**, confirmé directement par le propriétaire du S55, après inscription physique d'un doigt et redémarrage complet d'Android 11.
+
+Le protocole comprend impérativement **les deux corrections** : (1) bibliothèque MicroArray /vendor/lib64/libfprint-x64.so avec correctif remaining_templates=0, hash SHA256 attendu 3d89603ed3025bdc14e65d6269024c52920808c747aeb2d79417741d7cc7f9f6, déjà intégrée à l'image vendor vérifiée ; (2) propriété persistante PHH persist.sys.phh.fingerprint.nocleanup=true, appliquée après le premier démarrage Android par scripts/enable-microarray-persistence.sh --apply, avec contrôle du modèle et du hash. Le paramètre PHH seul, avant correction du HAL, avait échoué : **ne pas supprimer le patch binaire**.
+
+**Test d'acceptation obligatoire sur toute nouvelle installation :** inscrire physiquement un doigt, redémarrer, saisir le PIN si Android l'exige après le démarrage, verrouiller, puis déverrouiller au moyen du même doigt. Notre S55 a réussi ce test. Le mode ./INSTALL.sh --verify ne remplace pas le contrôle humain. Aucune empreinte ni modèle biométrique n'est lu, sauvegardé ou publié par les scripts.
+
+### English — final physical result
+
+**Confirmed by the owner on 10 October 2026:** the enrolled fingerprint successfully unlocks the reference S55 after a full Android 11 reboot. This is a user-performed functional acceptance test, not merely a framework template count. The successful fix is the exact MicroArray vendor enumeration patch **AND** PHH cleanup retention property used together. The offline kit applies both. On another handset, physically enroll one finger, reboot, perform any required first PIN unlock, then lock and unlock using the same finger. Automated configuration checks cannot prove that physical test.
+
+---
 
 ## Français
 

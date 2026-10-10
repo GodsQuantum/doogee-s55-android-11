@@ -57,7 +57,7 @@ Read-only --recovery-check verifies the original GPT and nine compressed backups
 |---|---|
 | **Android 11** | LineageOS 18.1 ARM64 non-SAR boots and reboots normally |
 | **Google apps** | NikGapps Core, Play Store, Google Play services and GSF present |
-| **Fingerprint** | MicroArray fix plus PHH retention; one enrolled finger survived a full reboot; physical unlock still to verify |
+| **Fingerprint** | **Physically confirmed on reference S55:** enrolled fingerprint unlocks after reboot using MicroArray HAL patch + PHH retention |
 | **Battery readings** | Real voltage and temperature exposed; no fake thermal constants |
 | **Thermal HAL** | Real CPU, GPU, battery and case temperatures; SELinux stays **Enforcing** |
 | **Legacy peripherals** | MediaTek sensor / gesture vendor compatibility fixes applied |
@@ -71,7 +71,7 @@ Our reference phone was verified booting, with 100% battery, realistic thermal r
 - **DOOGEE S55 only**, never S55 Lite. Original Android 8/Oreo hardware is the starting point; Android 13+ GSIs need additional non-SAR/SAR porting and **must not be flashed directly**.
 - The installer copies the exact vendor/2020 boot image verified on the reference phone. It backs up the target's original partitions first. It never replaces preloader, LK, modem or radio identity/calibration partitions.
 - If the charger or an aged lithium battery fails after true deep discharge, **no Android software patch can guarantee recovery**. Low-battery bootloader protections remain enabled.
-- Fingerprint HAL now loads without errors; **after enrollment, unlock again after a reboot** to verify the enrolled fingerprint remains usable.
+- **Post-reboot fingerprint unlock succeeded on our physical S55 (owner confirmation, 10 October 2026)**. The offline installer includes **both** the exact MicroArray enumeration repair (golden vendor) and PHH retention (post-boot). On any other handset, enroll a finger and repeat the physical unlock test after reboot; the read-only verification mode cannot perform that human test.
 - This kit passed offline SHA256 checks, static analysis and read-only command tests. **A full virgin-stock-to-LineageOS run on a second S55 has not yet been field-validated.** No promise of universal compatibility.
 
 ## 📖 Documentation

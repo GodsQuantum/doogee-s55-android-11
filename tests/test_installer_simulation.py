@@ -51,6 +51,7 @@ with tempfile.TemporaryDirectory(prefix="local-s55-test-", dir=ROOT) as temp:
     shutil.copy2(ROOT / "installer/INSTALL.sh", kit / "INSTALL.sh")
     shutil.copy2(ROOT / "installer/README.md", kit / "README.md")
     (kit / "scripts/fix-lineage18-thermal-sepolicy.sh").write_text("#!/bin/sh\nexit 99\n")
+    (kit / "scripts/enable-microarray-persistence.sh").write_text("#!/bin/sh\nexit 99\n")
     (kit / "scripts/progress-stream.py").write_text("#!/usr/bin/env python3\nraise SystemExit(99)\n")
     paths = sorted(p for p in kit.rglob("*") if p.is_file())
     with (kit / "manifest.sha256").open("w") as out:
@@ -71,6 +72,8 @@ elif args and args[0] == 'shell':
     if 'getprop ro.vendor.build.fingerprint' in cmd: print(os.environ.get('S55_MOCK_VENDOR', 'DOOGEE/S55/S55:8.0.0/O00623/1573208580:user/release-keys'))
     if 'getprop ro.product.device' in cmd: print(os.environ.get('S55_MOCK_PRODUCT', 'S55'))
     elif 'getprop ro.product.model' in cmd: print('DOOGEE S55')
+    elif 'getprop ro.hardware.fingerprint' in cmd: print(os.environ.get('S55_MOCK_FINGERPRINT_HAL', 'microarray'))
+    elif 'sha256sum /vendor/lib64/libfprint-x64.so' in cmd: print(os.environ.get('S55_MOCK_FINGERPRINT_SHA', '3d89603ed3025bdc14e65d6269024c52920808c747aeb2d79417741d7cc7f9f6')+'  /vendor/lib64/libfprint-x64.so')
     elif 'getprop ro.build.version.release' in cmd: print(os.environ.get('S55_MOCK_VERSION', '11'))
     elif 'getprop ro.twrp.version' in cmd: print(os.environ.get('S55_MOCK_TWRP', '3.1.1-0' if os.environ.get('S55_MOCK_STATE')=='recovery' else ''))
     elif 'getprop sys.boot_completed' in cmd: print('1')
@@ -83,7 +86,7 @@ elif args and args[0] == 'shell':
     elif cmd.startswith('df -k /tmp'): print('580000')
     elif 'pm list packages' in cmd:
         print('package:com.google.android.gms\\npackage:com.android.vending\\npackage:com.google.android.gsf')
-    elif 'getprop persist.sys.phh.fingerprint.nocleanup' in cmd: print('true')
+    elif 'getprop persist.sys.phh.fingerprint.nocleanup' in cmd: print(os.environ.get('S55_MOCK_PHH_RETENTION', 'true'))
     elif 'dumpsys battery' in cmd: print('3950' if 'voltage' in cmd else '310')
     elif 'dumpsys thermalservice' in cmd:
         print('mName=CPU_T\\nmName=GPU_T\\nmName=BAT_T\\nmName=SKIN_T')
@@ -131,6 +134,16 @@ sys.exit(96)
     result = run("--verify")
     assert result.returncode == 0, result.stderr
     assert "ANDROID11_GAPPS_THERMAL_SELINUX_VERIFIED_READ_ONLY" in result.stdout
+    assert "FINGERPRINT_PATCH_AND_PHH_RETENTION_VERIFIED_READ_ONLY" in result.stdout
+    assert "PHYSICAL_ACCEPTANCE" in result.stdout
+    for env_overrides, expected in [
+        ({"S55_MOCK_FINGERPRINT_HAL": "other"}, "Unexpected fingerprint hardware"),
+        ({"S55_MOCK_FINGERPRINT_SHA": "0" * 64}, "enumerator hash mismatch"),
+        ({"S55_MOCK_PHH_RETENTION": "false"}, "retention not set"),
+    ]:
+        negative = run("--verify", custom_env=env_overrides)
+        assert negative.returncode != 0 and expected in negative.stderr, (env_overrides, negative.stderr)
+
 
     result = run("--verify", custom_env={"S55_MOCK_VENDOR": "DOOGEE/S55_Lite/S55_Lite:8.0.0/test"})
     assert result.returncode != 0 and "Not DOOGEE S55" in result.stderr
