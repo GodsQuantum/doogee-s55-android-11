@@ -23,6 +23,7 @@ Target: **original DOOGEE S55**, MTK6750 family, A-only/non-system-as-root Andro
 
 ## Interrupted installation and safe resumption
 
+- Each of the eight destructive phases writes a private .inflight marker **before** partition modification. Unexpected termination leaves that marker in place, aborting all retries **before any renewed phone access or writes**. The .ok marker is recorded atomically only after post-write validation succeeds. Never delete an in-flight marker without a manual partition-level audit.
 - Every completed checkpoint is retested against observed GPT, ext4 filesystem state, target boot/vendor SHA, healthd hash or actual Google files before skipping. A filename alone is not trusted.
 - Backups remain in private-install-state/backup; earlier factory system/cache sizes are compared against the *original* geometry, not the new layout.
 - An interrupted NikGapps stage leaves gapps.inflight and **stops** on retry: its effects might be partial. Diagnose recovery logs and repair the system/Google files using an expert-controlled procedure; no blind second flash.
@@ -41,6 +42,10 @@ The project includes a specific guarded prior-ROM rollback from the reference ph
 **Public:** MIT-licensed helper scripts, installer logic, CI/tests, README EN/FR/zh-CN, SVG project identity and docs.
 
 **Private:** local-kit, third-party system/Google ZIP, S55 boot, complete vendor image, donor proprietary ELF files, patch source binaries, device partitions, radio calibration, logcat/account/IMEI content. Do not upload kit to GitHub or attach it to a public release. No factory radio content is intentionally bundled.
+
+## Operating-performance recommendations
+
+Only four native Android power settings are applied and individually read back after successful boot. There are no unmeasured build.prop RAM tweaks, custom wakelock-daemon hooks or battery-protection overrides. For measured results, limitations and October 2026 stable dependency choices see [battery and performance report](POWER-PERFORMANCE-2026-10.md).
 
 ## October 2026 references and limitations
 

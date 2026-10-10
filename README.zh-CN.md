@@ -39,6 +39,8 @@ bash scripts/build-s55-lineage18-kit.sh
 
 [**完整 A–Z 安装说明（英文）→**](installer/README.md) · [**安全审计与恢复限制**](docs/INSTALLER-SAFETY-AUDIT-2026-10.md)
 
+**电池与性能优化：** [原生设置、真实测试与限制](docs/POWER-PERFORMANCE-2026-10.md)。
+
 仅进行只读检查，不写入手机（--verify 用于已启动 Android 11 的 S55；切勿为复查而重新刷机）：
 
 ```bash

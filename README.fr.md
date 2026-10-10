@@ -39,6 +39,8 @@ Cela construit `local-kit/`. Copie **tout le dossier** vers un PC Linux disposan
 
 [**Guide complet A à Z →**](installer/README.md) · [**Audit de sécurité et reprise**](docs/INSTALLER-SAFETY-AUDIT-2026-10.md)
 
+**Optimisations batterie et performances :** [réglages natifs et limites mesurées](docs/POWER-PERFORMANCE-2026-10.md).
+
 Pour contrôler le kit sans écriture (le mode --verify vérifie un S55 déjà démarré sous Android 11, sans reflasher) :
 
 ```bash
