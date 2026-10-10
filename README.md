@@ -1,3 +1,20 @@
+# Doogee S55 — LineageOS 18.1 (Android 11) + Google Play
+
+## Installation simple sur un S55 d'origine
+
+**Chemin recommandé : [kit A à Z en une commande](installer/README.md).** Le mainteneur construit le dossier local complet (ROM, TWRP, GApps, boot et vendor compatibles, correctifs et scripts) :
+
+```bash
+bash scripts/build-s55-lineage18-kit.sh
+cd local-kit && ./INSTALL.sh
+```
+
+Sur l'ordinateur relié au S55, **une seule commande `./INSTALL.sh`** orchestre toute l'installation, avec vérifications de signatures, sauvegardes et confirmation explicite des étapes destructrices. Le code et la documentation sont dans Git ; les images OEM/Google et les sauvegardes radio personnelles restent hors Git. Avant d'exécuter une installation, lire les avertissements de [l'installateur](installer/README.md) : le passage complet depuis un autre exemplaire d'origine nécessite encore une validation terrain.
+
+---
+
+## Ancien parcours crDroid 7.16 (archivé comme référence)
+
 # Doogee S55 — Android 11 Upgrade Guide (crDroid GSI)
 
 **A tested upgrade path for the Doogee S55: stock Android 8 Oreo → crDroid 7.16 / Android 11, with either Vanilla or Google Apps, plus the device-specific fixes needed to make the old MediaTek vendor behave correctly.**
