@@ -41,8 +41,10 @@ step "Verify every vendor, ROM and Google asset BEFORE changing the phone"
    -s "$ASSET/boot-tested-s55.img" && -s "$ASSET/nikgapps-core-11.zip" &&
    -s "$ASSET/vendor-s55-known-good.img.zst" ]] ||
   die "Missing files in assets/"
-[[ -f "$SCRIPTS/fix-lineage18-thermal-sepolicy.sh" && -f "$SCRIPTS/progress-stream.py" ]] ||
-  die "Kit incomplete: installer helper scripts missing"
+[[ -f "$SCRIPTS/fix-lineage18-thermal-sepolicy.sh" &&
+   -f "$SCRIPTS/progress-stream.py" &&
+   -f "$SCRIPTS/enable-microarray-persistence.sh" ]] ||
+  die "Kit incomplete: required safety/fingerprint helper scripts missing"
 if [[ "$MODE" == --plan ]]; then
   cat <<'NOTE'
 STOCK DOOGEE S55, never S55 Lite. One command, guided:
@@ -54,7 +56,9 @@ STOCK DOOGEE S55, never S55 Lite. One command, guided:
   -> install NikGapps from recovery RAM without needing encrypted /data
   -> full /data format and prepare Android 11 vendor CE/DE
   -> patch healthd voltage and battery temperature
-  -> copy the exact known-good S55 boot -> reboot + test.
+  -> copy exact known-good S55 boot -> reboot Android
+  -> set guarded PHH MicroArray template retention (on Android 11)
+  -> enroll a finger, reboot, unlock with SAME finger to accept biometrics.
 This is a local community installer, not an official manufacturer update.
 --plan does not communicate with the phone or write any partition.
 NOTE
@@ -115,14 +119,22 @@ if [[ "$MODE" == --verify ]]; then
   for sensor in CPU_T GPU_T BAT_T SKIN_T; do
     grep -Fq "mName=$sensor" <<<"$thermal" || die "Missing thermal sensor $sensor"
   done
-  [[ "$(check_android "getprop persist.sys.phh.fingerprint.nocleanup")" == true ]] ||
+  # The fix is a PAIR: exactly patched MicroArray enumerator AND PHH
+  # template-cleanup retention. Neither alone is an acceptance test.
+  [[ "$(check_android 'getprop ro.hardware.fingerprint')" == microarray ]] ||
+    die "Unexpected fingerprint hardware (expected MicroArray)"
+  fp_hash="$(check_android 'sha256sum /vendor/lib64/libfprint-x64.so' | awk '{print $1}')"
+  [[ "$fp_hash" == 3d89603ed3025bdc14e65d6269024c52920808c747aeb2d79417741d7cc7f9f6 ]] ||
+    die "MicroArray enumerator hash mismatch; verified vendor patch missing"
+  [[ "$(check_android 'getprop persist.sys.phh.fingerprint.nocleanup')" == true ]] ||
     die "MicroArray retention not set; apply scripts/enable-microarray-persistence.sh --apply"
-  echo "FINGERPRINT_RETENTION_PROPERTY_ENABLED; PHYSICAL_UNLOCK_AFTER_REBOOT_STILL_REQUIRED"
+  echo "FINGERPRINT_PATCH_AND_PHH_RETENTION_VERIFIED_READ_ONLY"
+  echo "FINGERPRINT_PHYSICAL_ACCEPTANCE: enroll, reboot, unlock with SAME finger (user action)"
   for setting in low_power_trigger_level automatic_power_save_mode mobile_data_always_on ble_scan_always_enabled; do
     echo "NATIVE_POWER_SETTING $setting=$(check_android "settings get global $setting")"
   done
   echo "ANDROID11_GAPPS_THERMAL_SELINUX_VERIFIED_READ_ONLY"
-  echo "FINGERPRINT_ENROLLMENT_PERSISTENCE_REQUIRES_PHYSICAL_REBOOT_TEST"
+  echo "NOTE: --verify checks the FIX CONFIGURATION, not a finger's physical acceptance"
   exit 0
 fi
 cat <<'WARNING'
@@ -598,4 +610,8 @@ adb shell 'dumpsys battery | grep -E "level:|voltage:|temperature:"'
 adb shell 'dumpsys thermalservice | grep "Current temperatures from HAL:" -A5'
 touch "$BACK/installed.ok"
 echo "INSTALLATION VERIFIED. Private original backups: $BACK/backup"
-echo "Enroll fingerprint and validate unlocking across another reboot on the phone."
+echo "FINGERPRINT ACCEPTANCE: Settings > Security > Fingerprint: enroll a finger."
+echo "REBOOT the phone, enter the PIN once if prompted, then lock and UNLOCK with that SAME finger."
+echo "On the reference S55 this exact combined fix has passed a physical post-reboot unlock."
+echo "For this NEW device, the biometric test is PENDING until the owner performs it."
+echo "To audit the complete verified fix configuration without flashing: ./INSTALL.sh --verify"

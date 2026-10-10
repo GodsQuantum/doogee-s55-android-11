@@ -58,7 +58,7 @@ Le mode --recovery-check vérifie localement la GPT et les neuf sauvegardes d’
 |---|---|
 | **Système** | LineageOS 18.1 / Android 11 démarre et redémarre |
 | **Google Play** | NikGapps Core, Play Store, services Google et GSF installés |
-| **Empreinte MicroArray** | Correctif MicroArray et rétention PHH : empreinte conservée après redémarrage, déverrouillage réel à confirmer |
+| **Empreinte MicroArray** | **Déverrouillage par empreinte réussi après redémarrage**, confirmé physiquement sur le S55 de référence (correctif MicroArray + rétention PHH) |
 | **Batterie** | Tension et température réelles remontées à Android |
 | **Thermique** | Températures CPU, GPU, batterie et châssis ; SELinux **Enforcing** |
 | **Capteurs et gestes** | Correctifs de compatibilité des anciennes bibliothèques MediaTek |
@@ -70,7 +70,7 @@ Le mode --recovery-check vérifie localement la GPT et les neuf sauvegardes d’
 - **S55 standard exclusivement**, pas S55 Lite. Android 13 et plus ne sont pas directement compatibles avec la configuration non-SAR du téléphone.
 - Sauvegarde des partitions d'origine (`system`, `boot`, `vendor`, `recovery`, NVRAM/NVDATA, protections et GPT) avant toute répartition ou écriture. Les identifiants radio restent propres à chaque appareil et hors GitHub.
 - **La panne après décharge profonde n'est pas garantie résolue.** Le seuil matériel de sécurité n'a pas été contourné.
-- Le capteur d'empreinte est chargé sans crash ; après l'ajout d'un doigt, le reconnaître à nouveau **après un redémarrage**.
+- **Test physique concluant le 10 octobre 2026 : déverrouillage par empreinte après redémarrage confirmé par le propriétaire.** Le kit applique automatiquement les deux corrections (vendor MicroArray + rétention PHH). Sur un autre S55, il faut inscrire un doigt, redémarrer et vérifier le déverrouillage ; le contrôle automatisé ne remplace pas ce test.
 - Le kit passe les vérifications statiques et SHA256 ; **nous n'avons pas encore réalisé l'installation complète sur un second S55 jamais modifié**. Les variantes inconnues sont refusées plutôt que flashées aveuglément.
 
 ## 📚 Guides

@@ -58,7 +58,7 @@ bash scripts/build-s55-lineage18-kit.sh
 |---|---|
 | **Android 系统** | LineageOS 18.1 / Android 11 正常开机并可重启 |
 | **Google 服务** | NikGapps Core、Play 商店、GMS 和 GSF 已安装 |
-| **指纹 MicroArray** | MicroArray 与 PHH 修复：已登记指纹在一次重启后仍然保留；仍需验证指纹解锁 |
+| **指纹 MicroArray** | **已在参考 S55 上实测成功**：MicroArray 补丁与 PHH 保留机制配合使用，重启后指纹仍能解锁 |
 | **电池读数** | Android 能获得真实电压与温度，不使用虚假固定数值 |
 | **热管理** | CPU、GPU、电池、机身温度正常上报，SELinux 保持 **Enforcing** |
 | **传感器与手势** | 适配旧版 MediaTek 供应商库 |
@@ -70,7 +70,7 @@ bash scripts/build-s55-lineage18-kit.sh
 - **仅适用于标准 DOOGEE S55，不适用于 S55 Lite。** Android 13 及更新的 GSI 不能直接刷入该非 SAR / Oreo vendor 设备。
 - 在分区或刷机前备份原设备的 `system`、`boot`、`recovery`、`vendor`、`nvram`、`nvdata`、保护分区及 GPT。设备专属校准数据绝不会分享。
 - 对于真实的锂电池深度放电或硬件充电故障，**无法保证仅靠系统修复就能恢复开机**；不会绕过 Bootloader 的低电压保护。
-- 指纹驱动服务无崩溃；注册手指后还需要重启并重新使用同一手指解锁验证。
+- **2026 年 10 月 10 日机主确认：参考 S55 重启后可使用已登记指纹解锁。** 离线安装包包含 MicroArray 驱动修复与 PHH 指纹保留设置。其他 S55 仍须在安装后自行登记指纹、重启并测试解锁；自动检查只能验证配置，无法代替真人指纹测试。
 - 所有文件已通过离线校验和只读预检；**尚未在第二台从未修改的原厂 S55 上完成全部刷机流程**。未知硬件版本会拒绝安装。
 
 ## 📚 文档与技术资料
