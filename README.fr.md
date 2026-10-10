@@ -58,7 +58,7 @@ Le mode --recovery-check vérifie localement la GPT et les neuf sauvegardes d’
 |---|---|
 | **Système** | LineageOS 18.1 / Android 11 démarre et redémarre |
 | **Google Play** | NikGapps Core, Play Store, services Google et GSF installés |
-| **Empreinte MicroArray** | Erreur d'énumération du pilote corrigée ; test avec un doigt enregistré encore nécessaire |
+| **Empreinte MicroArray** | Correctif MicroArray et rétention PHH : empreinte conservée après redémarrage, déverrouillage réel à confirmer |
 | **Batterie** | Tension et température réelles remontées à Android |
 | **Thermique** | Températures CPU, GPU, batterie et châssis ; SELinux **Enforcing** |
 | **Capteurs et gestes** | Correctifs de compatibilité des anciennes bibliothèques MediaTek |

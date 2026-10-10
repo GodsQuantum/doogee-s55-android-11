@@ -20,6 +20,9 @@ def main() -> None:
     assert "INSTALL-S55-ERASE-ALL" in installer
     assert "UNLOCK-S55" in installer
     assert "private-install-state" in installer
+    assert "^[[:space:]]*voltage:" in installer
+    assert "enable-microarray-persistence.sh" in installer
+    assert "enable-microarray-persistence.sh" in builder
     assert "target-recovery-id.sha256" in installer
     assert "gapps.inflight" in installer and "cache.ok" in installer
     assert "stage_begin" in installer and "stage_done" in installer

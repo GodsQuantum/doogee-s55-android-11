@@ -1,5 +1,17 @@
 # Doogee S55 MicroArray fingerprint fix
 
+## Update 10 October 2026 — LineageOS 18.1 physical device
+
+The old patched MicroArray library alone did not prove fingerprint persistence after reboot. At the start of this investigation the exact patched hash was present, but Android contained zero registered fingerprints. PHH fingerprint cleanup retention was previously tested before the binary enumeration fix and failed alone.
+
+**Combined mitigation now applied:** keep the SHA256-guarded MicroArray enumeration fix AND set persist.sys.phh.fingerprint.nocleanup=true in the installed PHH Android 11 framework. The deployed services.jar has this feature. The property requires privileged ADB on this build; ordinary ADB shell cannot set it.
+
+An actual finger was enrolled, and one registered fingerprint remained after a controlled full reboot (Android user unlocked, system fully booted). The HAL did not die, SELinux remained Enforcing, and the PHH property persisted. **Physical fingerprint unlock after reboot and stability across additional reboots remain unverified** as of this checkpoint (accept=0). Do not claim this proves successful fingerprint unlocking.
+
+The guarded helper scripts/enable-microarray-persistence.sh supports --check and --apply, refuses wrong vendor/Android/HAL hash and immediately returns adbd to non-root after a privileged change. No biometric template files are read, exported or erased. PHH no-cleanup can leave orphaned fingerprint metadata when framework and HAL disagree, so use it only with a validated enumerator fix, and verify physical unlock.
+
+---
+
 [← README](../README.md) · [Technical notes](TECHNICAL-NOTES.md) · [`fix-microarray-fingerprint.sh`](../scripts/fix-microarray-fingerprint.sh)
 
 ## Français

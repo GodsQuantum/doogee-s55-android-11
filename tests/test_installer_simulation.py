@@ -21,6 +21,13 @@ def install_fake_tool(bin_dir: Path, name: str, body: str) -> None:
     path.chmod(0o755)
 
 
+# Regression: the max charger-voltage field must never masquerade as cell voltage.
+battery_dump = "  Max charging voltage: 5000000\n  voltage: 3950\n  temperature: 290\n"
+voltage_extract = subprocess.run(
+    ["sed", "-n", "s/^[[:space:]]*voltage:[[:space:]]*//p"],
+    input=battery_dump, capture_output=True, text=True, check=True)
+assert voltage_extract.stdout.strip() == "3950", voltage_extract.stdout
+
 # Stream accounting is tested without disk images or physical devices.
 stream_script = ROOT / "scripts/progress-stream.py"
 dummy = (bytes(range(256)) * 2048) + b"TAIL"
@@ -61,6 +68,7 @@ if args and args[0] == 'devices':
     print('MOCK_S55_0001\\t'+os.environ.get('S55_MOCK_STATE','device'))
 elif args and args[0] == 'shell':
     cmd = ' '.join(args[1:])
+    if 'getprop ro.vendor.build.fingerprint' in cmd: print(os.environ.get('S55_MOCK_VENDOR', 'DOOGEE/S55/S55:8.0.0/O00623/1573208580:user/release-keys'))
     if 'getprop ro.product.device' in cmd: print(os.environ.get('S55_MOCK_PRODUCT', 'S55'))
     elif 'getprop ro.product.model' in cmd: print('DOOGEE S55')
     elif 'getprop ro.build.version.release' in cmd: print(os.environ.get('S55_MOCK_VERSION', '11'))
@@ -75,6 +83,7 @@ elif args and args[0] == 'shell':
     elif cmd.startswith('df -k /tmp'): print('580000')
     elif 'pm list packages' in cmd:
         print('package:com.google.android.gms\\npackage:com.android.vending\\npackage:com.google.android.gsf')
+    elif 'getprop persist.sys.phh.fingerprint.nocleanup' in cmd: print('true')
     elif 'dumpsys battery' in cmd: print('3950' if 'voltage' in cmd else '310')
     elif 'dumpsys thermalservice' in cmd:
         print('mName=CPU_T\\nmName=GPU_T\\nmName=BAT_T\\nmName=SKIN_T')
@@ -123,7 +132,7 @@ sys.exit(96)
     assert result.returncode == 0, result.stderr
     assert "ANDROID11_GAPPS_THERMAL_SELINUX_VERIFIED_READ_ONLY" in result.stdout
 
-    result = run("--verify", custom_env={"S55_MOCK_PRODUCT": "S55_Lite"})
+    result = run("--verify", custom_env={"S55_MOCK_VENDOR": "DOOGEE/S55_Lite/S55_Lite:8.0.0/test"})
     assert result.returncode != 0 and "Not DOOGEE S55" in result.stderr
 
     result = run("--verify", custom_env={"S55_MOCK_VERSION": "8.0.0"})

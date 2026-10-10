@@ -58,7 +58,7 @@ bash scripts/build-s55-lineage18-kit.sh
 |---|---|
 | **Android 系统** | LineageOS 18.1 / Android 11 正常开机并可重启 |
 | **Google 服务** | NikGapps Core、Play 商店、GMS 和 GSF 已安装 |
-| **指纹 MicroArray** | 修复旧版 HAL 的枚举计数缺陷；仍需注册指纹后验证重启持久性 |
+| **指纹 MicroArray** | MicroArray 与 PHH 修复：已登记指纹在一次重启后仍然保留；仍需验证指纹解锁 |
 | **电池读数** | Android 能获得真实电压与温度，不使用虚假固定数值 |
 | **热管理** | CPU、GPU、电池、机身温度正常上报，SELinux 保持 **Enforcing** |
 | **传感器与手势** | 适配旧版 MediaTek 供应商库 |

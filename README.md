@@ -57,7 +57,7 @@ Read-only --recovery-check verifies the original GPT and nine compressed backups
 |---|---|
 | **Android 11** | LineageOS 18.1 ARM64 non-SAR boots and reboots normally |
 | **Google apps** | NikGapps Core, Play Store, Google Play services and GSF present |
-| **Fingerprint** | Exact MicroArray enumeration bug patched; enrollment persistence still requires a physical finger test |
+| **Fingerprint** | MicroArray fix plus PHH retention; one enrolled finger survived a full reboot; physical unlock still to verify |
 | **Battery readings** | Real voltage and temperature exposed; no fake thermal constants |
 | **Thermal HAL** | Real CPU, GPU, battery and case temperatures; SELinux stays **Enforcing** |
 | **Legacy peripherals** | MediaTek sensor / gesture vendor compatibility fixes applied |

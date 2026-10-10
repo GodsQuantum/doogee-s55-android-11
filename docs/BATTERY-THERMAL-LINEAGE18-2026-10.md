@@ -54,3 +54,14 @@ Correctif du vendor MicroArray préservé avec contexte SELinux. Le service biom
 ## Réversibilité
 
 Les deux scripts de correction refusent tout binaire, version ou appareil non reconnu, vérifient les SHA256, l'état de batterie et les montages exacts, puis rendent les partitions en lecture seule. Depuis le TWRP original, utiliser --restore pour revenir indépendamment au healthd tension seule ou à la politique vendeur originale. Le bootloader, le boot, les montages hôtes, NVRAM/NVDATA et la GPT n'ont pas été modifiés par ces corrections.
+
+
+## New live audit, 10 October 2026 — battery recovery still NOT proven
+
+On the reference S55 connected to Pegasus USB, charging and reboot readings included: battery 100% / Full, real voltage 4.216–4.355 V, battery temperature 28–29 C, USB charger voltage approximately 4.79 V, advertised USB maximum charge current 500 mA, and a reported charge counter 4,708,000 microamp-hours. These are plausible live telemetry but are NOT a measured capacity, battery health certificate, or proof of successful deep-discharge recovery.
+
+The phone booted successfully after one reboot at 100% with USB power. Native low-power settings and Doze remained enabled, with 25% automatic Battery Saver; thermal CPU, GPU, SKIN and BAT readings and enforcing SELinux remained available. KPOC kernel support is compiled in and historical fastboot reported off-mode-charge=1. The kernel's and bootloader's safeguards have not been bypassed. An actual powered-off charge, 0% recovery or unplugged standby experiment was NOT performed: repeating the previous failure by intentionally draining an aged battery is unsafe.
+
+NEW RADIO BUG: three separate private tombstones dated 10 October 2026 (01:50, 02:37, 17:52) show the MediaTek vendor rilproxy crashing with a null-pointer SIGSEGV in librilproxy.so at radio::networkInfoInd+272. After a subsequent successful reboot the process was alive and no fresh crash had appeared at the time checked. Comparable rilproxy crashes were also discussed by LineageOS/MediaTek users on a different handset: https://forum.shiftphones.com/threads/lineageos-15-1-android-8-1.1950/page-2 . No evidence yet attributes the past deep-discharge or all modem wakelocks to this crash. Preserve cellular calls, emergency access, and future SIM functionality; no blind modem, vendor binary or radio disablement is justified.
+
+A controlled, safe unplugged idle observation plus calibrated discharge/charging measurements on a wall 5 V / 2 A charger remain necessary before claiming the battery issue resolved. Preserve original radio partition backups and original KPOC protections. Avoid forced shutdown triggered by an untrusted percentage reading and avoid thermal/low-voltage threshold bypasses.
