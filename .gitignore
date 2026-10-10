@@ -1,3 +1,8 @@
+# Machine-specific handoffs: contain local paths, device identifiers and private state
+HANDOFF_CURRENT.md
+HANDOFF_*.md
+PROMPT_NEW_SESSION_*.md
+
 # Generated/local backups
 backups/*
 # Self-contained OFFLINE flash kit: OEM/Google/boot/vendor images MUST NOT be in Git
