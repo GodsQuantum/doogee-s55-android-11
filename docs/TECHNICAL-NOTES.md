@@ -1,3 +1,5 @@
+> **Technical historical reference.** The crDroid-specific figures below document the older GApps partition work. The current primary target is LineageOS 18.1 + NikGapps Core with a separate verified installer and privacy boundaries: [installation audit](INSTALLER-SAFETY-AUDIT-2026-10.md).
+
 # Doogee S55 — Android 11 Technical Notes
 
 [← README](../README.md) · [Fingerprint fix](FINGERPRINT-FIX.md)

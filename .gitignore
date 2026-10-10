@@ -8,6 +8,8 @@ backups/*
 # Self-contained OFFLINE flash kit: OEM/Google/boot/vendor images MUST NOT be in Git
 local-kit/
 local-kit-*/
+local-s55-test-*/
+local-s55-lint/
 installer/local-kit/
 private-install-state/
 local-stock-inspect-tmp/

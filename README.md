@@ -32,18 +32,22 @@ The kit is **not shipped inside the public Git checkout**: LineageOS images, Goo
 bash scripts/build-s55-lineage18-kit.sh
 ```
 
-Copy the resulting **whole** `local-kit/` directory to a Linux computer with ADB, Fastboot, Python 3, xz, zstd and pv. Run `./INSTALL.sh` **as your ordinary user**, not with `sudo`. The installer checks every asset and guides OEM unlocking, TWRP, backups, the safe known GPT conversion, system/vendor flash, GApps, userdata preparation and final Android verification.
+Copy the resulting **whole** `local-kit/` directory to a Linux computer with ADB, Fastboot, Python 3, xz and zstd. The bundled Python progress display makes pv optional. Run `./INSTALL.sh` **as your ordinary user**, not with `sudo`. The installer checks every asset and guides OEM unlocking, TWRP, backups, the safe known GPT conversion, system/vendor flash, GApps, userdata preparation and final Android verification.
 
 **Before installing:** back up personal files; charge the battery to **at least 40%**; enable USB debugging and OEM unlock on stock Android 8. **All apps and internal storage will be erased.** Some physical interaction during unlocking/recovery is unavoidable.
 
-[**Read the complete A–Z installation guide →**](installer/README.md)
+[**Read the complete A–Z installation guide →**](installer/README.md) · [**Safety audit and recovery limitations**](docs/INSTALLER-SAFETY-AUDIT-2026-10.md)
 
-For read-only checks using an already prepared kit:
+For read-only checks using an already prepared kit (--verify requires a running Android 11 S55; never use --install to recheck a working phone):
 
 ```bash
 ./INSTALL.sh --plan
 ./INSTALL.sh --check
+./INSTALL.sh --verify
+./INSTALL.sh --recovery-check
 ```
+
+Read-only --recovery-check verifies the original GPT and nine compressed backups locally, without restoring any partition.
 
 ## ✨ What the project fixes
 
