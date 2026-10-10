@@ -38,6 +38,9 @@ def main() -> None:
     assert "nvram nvdata protect1 protect2" in installer
     assert "flash preloader" not in installer.lower()
     assert "boot-tested-s55.img" in builder and "vendor-s55-known-good.img.zst" in builder
+    assert "$PROJECT/" not in builder
+    assert "$ROOT/files/installer-assets/lineage18.img.xz" in builder
+    assert "$ROOT/files/installer-assets/twrp-s55.img" in builder
     assert "private-install-state/backup" in docs
     assert "one command" in docs.lower()
     for prohibited in ("fastboot flash preloader", "fastboot flash nvram", "fastboot flash lk", "adb reboot sideload"):
