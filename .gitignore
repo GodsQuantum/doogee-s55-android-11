@@ -1,5 +1,13 @@
 # Generated/local backups
 backups/*
+# Self-contained OFFLINE flash kit: OEM/Google/boot/vendor images MUST NOT be in Git
+local-kit/
+local-kit-*/
+installer/local-kit/
+private-install-state/
+local-stock-inspect-tmp/
+**/__pycache__/
+*.pyc
 !backups/.gitignore
 
 # Third-party device artifacts are local-only
