@@ -70,3 +70,10 @@ For a non-destructive look at the installation plan:
 - We have thoroughly verified the *asset signatures, stock/GPT layout and current working S55*, but the combined single-command journey from a **different never-modified stock S55** is not yet end-to-end proven. The safeguards intentionally fail closed, and any exception should be documented rather than worked around by unconditional flashing.
 
 Official upstream references: [ADB / Fastboot](https://developer.android.com/tools/releases/platform-tools), [Android bootloader unlock](https://source.android.com/docs/core/architecture/bootloader/locking_unlocking), [NikGapps A-only flash sequence](https://nikgapps.com/misc/2023/03/04/Flash-NikGapps.html).
+
+
+## Fingerprint retention and real-world acceptance test
+
+On the final S55 LineageOS 18.1 GSI, the installer activates PHH fingerprint cleanup retention only after verifying the known-good MicroArray patched library. The helper scripts/enable-microarray-persistence.sh can be run separately (--check read-only, --apply guarded and reversible). Temporary root ADB, where available, is disabled immediately after the property update. Fingerprint templates are neither copied nor erased.
+
+Once a user has physically enrolled a finger, reboot and complete any required first PIN unlock. Then use that same finger to unlock, and repeat on another reboot. The --verify audit confirms the configuration is present; it cannot confirm biometric recognition. If the property cannot be set on an unknown stock build, stop instead of falsely claiming a verified fingerprint fix.
