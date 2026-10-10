@@ -4,7 +4,6 @@
 set -Eeuo pipefail
 export LC_ALL=C
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-PROJECT="$(cd "$ROOT/.." && pwd)"
 DEST="${1:-$ROOT/local-kit}"
 [[ "$DEST" = /* ]] || { echo "Destination must be absolute" >&2; exit 2; }
 # Respect the canonical project folder and avoid overwriting existing user data.
@@ -25,8 +24,8 @@ copy_exact(){
     fail "Copy checksum mismatch: $dst"
 }
 echo "Building LOCAL kit (never commit binaries to GitHub)"
-copy_exact "$PROJECT/los18.img.xz" "$DEST/assets/lineage18.img.xz" f793f611a9a8a4eca05f744582b58121eb7b392edb1b03330d7b625da7109fca
-copy_exact "$PROJECT/doogee-s55-crdroid/files/twrp-3.1.1-doogee-s55.img" "$DEST/assets/twrp-s55.img" bbf6c46cb001f9b14c7476beb73f9d2ae4398619c3b855498cca1a8276436038
+copy_exact "$ROOT/files/installer-assets/lineage18.img.xz" "$DEST/assets/lineage18.img.xz" f793f611a9a8a4eca05f744582b58121eb7b392edb1b03330d7b625da7109fca
+copy_exact "$ROOT/files/installer-assets/twrp-s55.img" "$DEST/assets/twrp-s55.img" bbf6c46cb001f9b14c7476beb73f9d2ae4398619c3b855498cca1a8276436038
 copy_exact "$ROOT/files/candidates/NikGapps-core-arm64-11-20260204-signed.zip" "$DEST/assets/nikgapps-core-11.zip" a56ad7da66e51a6cd1af0b0fb39a1ac167739161624115276b7f8d00633fd0f8
 # Exact 2020 boot whose KPOC and driver behavior was validated on physical S55.
 # This file may be proprietary and is LOCAL ONLY, never placed in git.

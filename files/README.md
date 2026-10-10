@@ -2,20 +2,23 @@
 
 This directory intentionally does **not** redistribute device or third-party binaries.
 
-Before using the installation guides, place these files here locally:
+The current LineageOS 18.1 kit builder reads all sources INSIDE this canonical project, rather than depending on a historical sibling crDroid checkout.
 
-```text
-files/twrp-3.1.1-doogee-s55.img
-files/Disable_Dm-Verity_ForceEncrypt.zip
-```
+| Local source, ignored by Git | Purpose |
+|---|---|
+| files/installer-assets/lineage18.img.xz | Verified Android 11 non-SAR ROM |
+| files/installer-assets/twrp-s55.img | S55-specific TWRP 3.1.1, never S55 Lite |
+| files/installer-assets/vendor-s55-known-good.img.zst | Exact repaired, tested vendor read-back |
+| files/candidates/NikGapps-core-arm64-11-20260204-signed.zip | Android 11 Google apps |
+| files/candidates/s55-2018-compat/ | Hash-pinned legacy MediaTek compatibility helpers |
+| backups/device-2026-10-09/boot-active.bin | Verified reference boot image |
+| backups/device-2026-10-10/ | Private patch baselines needed by the builder |
 
-They are ignored by Git and must not be committed.
+These last two paths are relative to the repository root, not to this files directory. Files under backups/device-* are historical/reference inputs. They are NOT radio backups created from a future target phone. Such per-device radio backups are created only during installation under the private-install-state directory, which must never be published.
 
-- TWRP: obtain a Doogee S55-specific recovery image from a source you trust.
-- Disable Dm-Verity / ForceEncrypt: upstream project by Zackptg5:
-  https://github.com/Zackptg5/Disable_Dm-Verity_ForceEncrypt
+A fresh public Git clone includes scripts and documentation only. To build a private offline kit, obtain and verify the exact binaries independently, then populate the documented local paths. OEM and Google packages are intentionally never distributed via GitHub.
 
-Do not substitute an image intended for the S55 Lite or another MediaTek device.
+The old crDroid projects, Android 13 candidate and stock-image collection remain historical research, not prerequisites for this final LineageOS 18.1 builder.
 
 ## October 2026 offline ROM/GApps candidate cache
 
