@@ -107,10 +107,16 @@ if [[ "$MODE" == --verify ]]; then
     grep -Fqx "package:$pkg" <<<"$apps" || die "Missing $pkg"
   done
   battemp="$(check_android 'dumpsys battery | sed -n "s/.*temperature: *//p" | head -1')"
-  [[ "$battemp" =~ ^[0-9]+$ && "$battemp" -gt 0 ]] || die "Battery telemetry absent"
+  [[ "$battemp" =~ ^[0-9]+$ && "$battemp" -gt 0 ]] || die "Battery temperature telemetry absent"
+  batvolt="$(check_android 'dumpsys battery | sed -n "s/.*voltage: *//p" | head -1')"
+  [[ "$batvolt" =~ ^[0-9]+$ && "$batvolt" -ge 3000 && "$batvolt" -le 4500 ]] ||
+    die "Invalid battery voltage telemetry (expected millivolts)"
   thermal="$(check_android 'dumpsys thermalservice')"
   for sensor in CPU_T GPU_T BAT_T SKIN_T; do
     grep -Fq "mName=$sensor" <<<"$thermal" || die "Missing thermal sensor $sensor"
+  done
+  for setting in low_power_trigger_level automatic_power_save_mode mobile_data_always_on ble_scan_always_enabled; do
+    echo "NATIVE_POWER_SETTING $setting=$(check_android "settings get global $setting")"
   done
   echo "ANDROID11_GAPPS_THERMAL_SELINUX_VERIFIED_READ_ONLY"
   echo "FINGERPRINT_ENROLLMENT_PERSISTENCE_REQUIRES_PHYSICAL_REBOOT_TEST"
@@ -139,6 +145,26 @@ exec > >(tee -a "$LOG") 2>&1
 echo "INSTALL_SESSION $(date -Is)"
 on_exit(){ local status=$?; echo "INSTALL_FINISHED_OR_STOPPED rc=$status $(date -Is); private backup=$BACK/backup"; }
 trap on_exit EXIT
+# Interrupted destructive operations never rerun automatically.
+stage_begin(){
+  local stage="$1"
+  [[ ! -e "$BACK/$stage.inflight" && ! -e "$BACK/$stage.ok" ]] ||
+    die "Ambiguous checkpoint for $stage: manual recovery audit required"
+  printf 'INFLIGHT %s %s\n' "$stage" "$(date -Is)" > "$BACK/$stage.inflight"
+  chmod 600 "$BACK/$stage.inflight"
+}
+stage_done(){
+  local stage="$1"
+  [[ -s "$BACK/$stage.inflight" ]] || die "Missing in-flight guard for $stage"
+  printf 'DONE %s %s\n' "$stage" "$(date -Is)" > "$BACK/$stage.ok.tmp"
+  chmod 600 "$BACK/$stage.ok.tmp"
+  mv -- "$BACK/$stage.ok.tmp" "$BACK/$stage.ok"
+  rm -f -- "$BACK/$stage.inflight"
+}
+for stage in repartition cache system vendor gapps data thermal boot; do
+  [[ ! -e "$BACK/$stage.inflight" ]] ||
+    die "Interrupted $stage: STOP. Inspect actual partition state; do not blindly retry"
+done
 remote(){ adb shell "$1" | tr -d '\r'; }
 adb_one(){
   [[ "$(adb devices | awk '$2=="device" || $2=="recovery"{c++} END {print c+0}')" == 1 ]] ||
@@ -332,13 +358,14 @@ done
 echo "DON'T PUBLISH OR SHARE THE RADIO/NVRAM BACKUPS."
 if [[ ! -e "$BACK/repartition.ok" ]]; then
   step "Expand only exact factory /system boundary and shrink /cache"
+  stage_begin repartition
   S55_GPT_BACKUP_DIR="$BACK/backup/gpt" bash "$SCRIPTS/repartition-gapps.sh"
   recovery_checks
   [[ "$(remote 'cat /sys/class/block/mmcblk0p28/size')" == 6373376 ]] ||
     die "Repartition kernel readback failed"
   [[ "$(gpt_gate)" == EXPANDED_GPT ]] || die "Repartition GPT was not persisted"
   adb shell 'sgdisk -v /dev/block/mmcblk0' || die "New GPT invalid"
-  touch "$BACK/repartition.ok"
+  stage_done repartition
 else
   [[ "$(gpt_gate)" == EXPANDED_GPT ]] ||
     die "repartition.ok exists but real geometry disagrees"
@@ -349,9 +376,10 @@ if [[ ! -e "$BACK/cache.ok" ]]; then
   [[ "$(remote 'blockdev --getsize64 /dev/block/mmcblk0p29')" == 184549376 ]] ||
     die "Unexpected new /cache partition geometry"
   [[ -z "$(remote 'mount | grep mmcblk0p29 || true')" ]] || die "/cache mounted"
+  stage_begin cache
   adb shell 'mke2fs -t ext4 -L cache /dev/block/mmcblk0p29'
   adb shell 'e2fsck -fn /dev/block/mmcblk0p29 >/tmp/s55-cache-fsck.log 2>&1; test $? -eq 0'
-  touch "$BACK/cache.ok"
+  stage_done cache
 else
   [[ "$(remote 'blockdev --getsize64 /dev/block/mmcblk0p29')" == 184549376 ]] ||
     die "Old cache completion marker inconsistent"
@@ -373,6 +401,7 @@ if [[ ! -e "$BACK/system.ok" ]]; then
   [[ ! -e "$BACK/gapps.ok" && ! -e "$BACK/thermal.ok" ]] ||
     die "Inconsistent checkpoint: cannot reflash system over already-installed GApps"
   step "Write non-SAR LineageOS 18.1 and verify block-level hash"
+  stage_begin system
   adb shell 'umount /system 2>/dev/null || true'
   xz -dc "$ASSET/lineage18.img.xz" | progress_stream 2055483392 |
     adb exec-in 'dd of=/dev/block/mmcblk0p28 bs=4194304 2>/dev/null || exit 2; sync'
@@ -382,7 +411,7 @@ if [[ ! -e "$BACK/system.ok" ]]; then
   adb shell 'e2fsck -fy /dev/block/mmcblk0p28 >/tmp/s55-fsck1 2>&1; test $? -le 1'
   adb shell 'resize2fs /dev/block/mmcblk0p28'
   adb shell 'e2fsck -fn /dev/block/mmcblk0p28 >/tmp/s55-fsck2 2>&1; test $? -eq 0'
-  touch "$BACK/system.ok"
+  stage_done system
 fi
 if [[ -e "$BACK/vendor.ok" ]]; then
   [[ "$(remote 'sha256sum /dev/block/mmcblk0p27' | awk '{print $1}')" == "$VENDOR_SHA" ]] ||
@@ -395,6 +424,7 @@ if [[ ! -e "$BACK/vendor.ok" ]]; then
   [[ -s "$BACK/backup/vendor.img.zst" ]] || die "Original vendor backup missing; refusing overwrite"
   adb shell 'umount /vendor 2>/dev/null || true'
   [[ -z "$(remote 'mount | grep mmcblk0p27 || true')" ]] || die "Vendor still mounted"
+  stage_begin vendor
   zstd -dc "$ASSET/vendor-s55-known-good.img.zst" | progress_stream 536870912 |
     adb exec-in 'dd of=/dev/block/mmcblk0p27 bs=4194304 2>/dev/null || exit 2; sync'
   got="$(remote 'dd if=/dev/block/mmcblk0p27 bs=1048576 count=512 2>/dev/null | sha256sum' | awk '{print $1}')"
@@ -402,7 +432,7 @@ if [[ ! -e "$BACK/vendor.ok" ]]; then
   adb shell 'mount -t ext4 -o ro,noload /dev/block/mmcblk0p27 /vendor'
   [[ "$(remote 'sha256sum /vendor/lib64/libfprint-x64.so' | awk '{print $1}')" == 3d89603ed3025bdc14e65d6269024c52920808c747aeb2d79417741d7cc7f9f6 ]] || die "Vendor fingerprint missing"
   [[ "$(remote 'sha256sum /vendor/etc/selinux/nonplat_sepolicy.cil' | awk '{print $1}')" == e0602bae3099274aec52e4fdf8ba6b121859e8ff35dea08dbc89cce967bd6daf ]] || die "Vendor thermal rules missing"
-  touch "$BACK/vendor.ok"
+  stage_done vendor
 fi
 if [[ -e "$BACK/gapps.inflight" && ! -e "$BACK/gapps.ok" ]]; then
   die "Interrupted/incomplete NikGapps install: inspect TWRP logs; never blindly rerun"
@@ -422,15 +452,14 @@ if [[ ! -e "$BACK/gapps.ok" ]]; then
   [[ "$ram_avail" =~ ^[0-9]+$ && "$ram_avail" -ge 180000 ]] ||
     die "TWRP /tmp RAM insufficient or unavailable: need 180 MiB"
   [[ ! -f "$BACK/gapps.inflight" ]] || die "NikGapps interrupted: check recovery log and repair before resuming"
-  touch "$BACK/gapps.inflight"
+  stage_begin gapps
   S55_GAPPS_REMOTE=/tmp/s55-NikGapps-core-arm64-11.zip S55_GAPPS_ZIP="$ASSET/nikgapps-core-11.zip" bash "$SCRIPTS/install-nikgapps-core11-s55.sh" --install
   adb shell 'mount -t ext4 -o ro,noload /dev/block/mmcblk0p28 /system 2>/dev/null || true'
   [[ "$(remote 'find /system -iname "*Phonesky*.apk" | head -1')" == *Phonesky* ]] ||
     die "Google Play Store not found after install"
   [[ "$(remote 'find /system -iname "*GmsCore*.apk" | head -1')" == *GmsCore* ]] ||
     die "Google Play services not found after install"
-  touch "$BACK/gapps.ok"
-  rm -f "$BACK/gapps.inflight"
+  stage_done gapps
 fi
 if [[ -e "$BACK/data.ok" ]]; then
   adb shell 'mount -t ext4 -o rw /dev/block/mmcblk0p30 /data 2>/dev/null || true'
@@ -447,13 +476,14 @@ if [[ ! -e "$BACK/data.ok" ]]; then
   recovery_checks
   adb shell 'umount /sdcard 2>/dev/null || true; umount /data 2>/dev/null || true'
   [[ -z "$(remote 'mount | grep mmcblk0p30 || true')" ]] || die "Data still mounted"
+  stage_begin data
   adb shell 'mke2fs -t ext4 /dev/block/mmcblk0p30'
   adb shell 'tune2fs -m 0 -r 4096 -u 10010 /dev/block/mmcblk0p30'
   adb shell 'e2fsck -fn /dev/block/mmcblk0p30 >/tmp/s55-fsck-data 2>&1; test $? -eq 0'
   adb shell 'mount -t ext4 -o rw /dev/block/mmcblk0p30 /data'
   # Reuse the exact idempotent helper validated on the physical S55.
   bash "$SCRIPTS/prepare-lineage18-userdata-s55.sh" --apply
-  touch "$BACK/data.ok"
+  stage_done data
 fi
 if [[ -e "$BACK/thermal.ok" ]]; then
   adb shell 'mount -t ext4 -o ro,noload /dev/block/mmcblk0p28 /system 2>/dev/null || true'
@@ -463,6 +493,7 @@ if [[ -e "$BACK/thermal.ok" ]]; then
 fi
 if [[ ! -e "$BACK/thermal.ok" ]]; then
   step "Repair true battery voltage/temperature and SELinux thermal HAL"
+  stage_begin thermal
   current_healthd="$(remote 'sha256sum /system/bin/healthd' | awk '{print $1}')"
   if [[ "$current_healthd" != 4421bd4794a9470e74b28c63e3ba9a2528e83a7635314ae27e5375c136555381 ]]; then
     if [[ "$current_healthd" == fc17574161e743e11c38e3d9d44b1c0b1bfdf04e946e78610dd69c80954c4215 ]]; then
@@ -473,7 +504,7 @@ if [[ ! -e "$BACK/thermal.ok" ]]; then
   [[ "$(remote 'sha256sum /system/bin/healthd' | awk '{print $1}')" == 4421bd4794a9470e74b28c63e3ba9a2528e83a7635314ae27e5375c136555381 ]] ||
     die "Final healthd not verified"
   # Already present and verified in the golden vendor image; no extra vendor patch.
-  touch "$BACK/thermal.ok"
+  stage_done thermal
 fi
 
 if [[ -e "$BACK/boot.ok" ]]; then
@@ -491,10 +522,11 @@ if [[ ! -e "$BACK/boot.ok" ]]; then
   sha="$(sha256sum "$ASSET/boot-tested-s55.img" | awk '{print $1}')"
   [[ "$(remote 'sha256sum /tmp/s55-validated-boot.img' | awk '{print $1}')" == "$sha" ]] ||
     die "Staged boot corrupted"
+  stage_begin boot
   adb shell 'dd if=/tmp/s55-validated-boot.img of=/dev/block/platform/mtk-msdc.0/11230000.msdc0/by-name/boot bs=1048576 2>/dev/null || exit 2; sync'
   [[ "$(remote 'sha256sum /dev/block/platform/mtk-msdc.0/11230000.msdc0/by-name/boot' | awk '{print $1}')" == "$sha" ]] ||
     die "Boot partition hash mismatch, DO NOT REBOOT"
-  touch "$BACK/boot.ok"
+  stage_done boot
 fi
 step "Validate exact final fingerprint and healthd binaries"
 adb shell 'mount -t ext4 -o ro,noload /dev/block/mmcblk0p28 /system 2>/dev/null || true'
@@ -553,6 +585,9 @@ for name in CPU_T GPU_T BAT_T SKIN_T; do
 done
 adb shell 'settings put global low_power_trigger_level 25; settings put global automatic_power_save_mode 0; settings put global mobile_data_always_on 0; settings put global ble_scan_always_enabled 0'
 [[ "$(remote 'settings get global low_power_trigger_level')" == 25 ]] || die "Battery saver not persisted"
+[[ "$(remote 'settings get global automatic_power_save_mode')" == 0 ]] || die "Automatic Battery Saver not selected"
+[[ "$(remote 'settings get global mobile_data_always_on')" == 0 ]] || die "Mobile data background optimization not persisted"
+[[ "$(remote 'settings get global ble_scan_always_enabled')" == 0 ]] || die "BLE background scanning setting not persisted"
 echo "ANDROID11_GOOGLE_THERMAL_BATTERY_VERIFIED"
 adb shell 'dumpsys battery | grep -E "level:|voltage:|temperature:"'
 adb shell 'dumpsys thermalservice | grep "Current temperatures from HAL:" -A5'

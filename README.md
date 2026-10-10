@@ -38,6 +38,8 @@ Copy the resulting **whole** `local-kit/` directory to a Linux computer with ADB
 
 [**Read the complete A–Z installation guide →**](installer/README.md) · [**Safety audit and recovery limitations**](docs/INSTALLER-SAFETY-AUDIT-2026-10.md)
 
+**Conservative performance and battery setup:** [evidence and official references](docs/POWER-PERFORMANCE-2026-10.md).
+
 For read-only checks using an already prepared kit (--verify requires a running Android 11 S55; never use --install to recheck a working phone):
 
 ```bash

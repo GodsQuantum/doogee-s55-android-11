@@ -22,6 +22,11 @@ def main() -> None:
     assert "private-install-state" in installer
     assert "target-recovery-id.sha256" in installer
     assert "gapps.inflight" in installer and "cache.ok" in installer
+    assert "stage_begin" in installer and "stage_done" in installer
+    for stage in ("repartition", "cache", "system", "vendor", "gapps",
+                  "data", "thermal", "boot"):
+        assert f"stage_begin {stage}" in installer
+        assert f"stage_done {stage}" in installer
     assert "raw.sha256" in installer and "gpt-original.sha256" in installer
     assert "adb exec-in 'dd of=/dev/block/mmcblk0p28 bs=4194304 2>/dev/null || exit 2; sync'" in installer
     assert "adb exec-in 'dd of=/dev/block/mmcblk0p27 bs=4194304 2>/dev/null || exit 2; sync'" in installer
