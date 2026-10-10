@@ -33,18 +33,22 @@ cd local-kit
 bash scripts/build-s55-lineage18-kit.sh
 ```
 
-主机需要 ADB、Fastboot、Python 3、xz、zstd、pv。**请以普通用户运行，不要使用 `sudo`**。
+主机需要 ADB、Fastboot、Python 3、xz、zstd。pv 可选；安装包内置 Python 刷写进度显示。**请以普通用户运行，不要使用 `sudo`**。
 
 **安装前必须：**自行备份照片及文件、确保电量**至少 40%**，在 Android 8 中打开 USB 调试及 OEM 解锁。**该安装会清除应用及全部内部存储数据。** Bootloader 解锁可能需要在手机上确认，进入 Recovery 也可能需要实体按键操作。
 
-[**完整 A–Z 安装说明（英文）→**](installer/README.md)
+[**完整 A–Z 安装说明（英文）→**](installer/README.md) · [**安全审计与恢复限制**](docs/INSTALLER-SAFETY-AUDIT-2026-10.md)
 
-仅检查安装包、不写入手机：
+仅进行只读检查，不写入手机（--verify 用于已启动 Android 11 的 S55；切勿为复查而重新刷机）：
 
 ```bash
 ./INSTALL.sh --plan
 ./INSTALL.sh --check
+./INSTALL.sh --verify
+./INSTALL.sh --recovery-check
 ```
+
+--recovery-check 在本地校验原始 GPT 与九份分区备份，不会写入任何分区。
 
 ## ✨ 已验证的改进
 

@@ -33,18 +33,22 @@ Le GitHub public contient le **code et la documentation**, pas les images constr
 bash scripts/build-s55-lineage18-kit.sh
 ```
 
-Cela construit `local-kit/`. Copie **tout le dossier** vers un PC Linux disposant d'ADB, Fastboot, Python 3, xz, zstd et pv. Exécute le script en tant qu'utilisateur normal, **pas avec `sudo`**.
+Cela construit `local-kit/`. Copie **tout le dossier** vers un PC Linux disposant d'ADB, Fastboot, Python 3, xz et zstd. pv est facultatif grâce au suivi de progression Python inclus. Exécute le script en tant qu'utilisateur normal, **pas avec `sudo`**.
 
 **Avant de commencer :** sauvegarde tes photos et fichiers, charge la batterie à **40 % minimum**, active le débogage USB et le déverrouillage OEM sur Android 8. **Toutes les applications et les données internes seront effacées.** Le déverrouillage OEM et certaines manipulations de recovery exigent une validation physique.
 
-[**Guide complet A à Z →**](installer/README.md)
+[**Guide complet A à Z →**](installer/README.md) · [**Audit de sécurité et reprise**](docs/INSTALLER-SAFETY-AUDIT-2026-10.md)
 
-Sans rien écrire sur le téléphone, avec le kit préparé :
+Pour contrôler le kit sans écriture (le mode --verify vérifie un S55 déjà démarré sous Android 11, sans reflasher) :
 
 ```bash
 ./INSTALL.sh --plan
 ./INSTALL.sh --check
+./INSTALL.sh --verify
+./INSTALL.sh --recovery-check
 ```
+
+Le mode --recovery-check vérifie localement la GPT et les neuf sauvegardes d’origine, sans réécriture.
 
 ## ✨ Ce qui est réellement réparé
 

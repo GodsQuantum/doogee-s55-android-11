@@ -8,4 +8,5 @@ lint:
 	@shellcheck -x -S error scripts/*.sh installer/*.sh
 	@python3 tests/test_public_hygiene.py
 	@python3 tests/test_one_command_installer.py
+	@python3 tests/test_installer_simulation.py
 	@python3 tests/test_repo_docs.py

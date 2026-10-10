@@ -20,8 +20,16 @@ def main() -> None:
     assert "INSTALL-S55-ERASE-ALL" in installer
     assert "UNLOCK-S55" in installer
     assert "private-install-state" in installer
+    assert "target-recovery-id.sha256" in installer
+    assert "gapps.inflight" in installer and "cache.ok" in installer
+    assert "raw.sha256" in installer and "gpt-original.sha256" in installer
+    assert "adb exec-in 'dd of=/dev/block/mmcblk0p28 bs=4194304 2>/dev/null || exit 2; sync'" in installer
+    assert "adb exec-in 'dd of=/dev/block/mmcblk0p27 bs=4194304 2>/dev/null || exit 2; sync'" in installer
+    assert "S55_GAPPS_REMOTE=/tmp/" in installer
+    assert "progress-stream.py" in installer and "progress-stream.py" in builder
+    assert "--verify" in installer
     assert "prepare-lineage18-userdata-s55.sh" in installer
-    assert installer.index('if [[ ! -e "$BACK/data.ok" ]]') < installer.index('if [[ ! -e "$BACK/gapps.ok" ]]')
+    assert installer.index('if [[ ! -e "$BACK/gapps.ok" ]]') < installer.index('if [[ ! -e "$BACK/data.ok" ]]')
     assert "nvram nvdata protect1 protect2" in installer
     assert "flash preloader" not in installer.lower()
     assert "boot-tested-s55.img" in builder and "vendor-s55-known-good.img.zst" in builder
