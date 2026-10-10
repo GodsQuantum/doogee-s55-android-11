@@ -51,7 +51,7 @@ for f in repartition-gapps.sh decrypt-fstab.sh \
   fix-microarray-fingerprint.sh fix-vendor-compat-s55.sh \
   fix-vendor-sensor-log-s55.sh fix-healthd-voltage.sh \
   fix-lineage18-healthd-temperature.sh fix-lineage18-thermal-sepolicy.sh \
-  patch-healthd-voltage.py patch-lineage18-healthd-temperature.py \
+  patch-healthd-voltage.py patch-lineage18-healthd-temperature.py progress-stream.py \
   install-nikgapps-core11-s55.sh prepare-lineage18-userdata-s55.sh; do
   [[ -f "$ROOT/scripts/$f" ]] || fail "Missing Git source scripts/$f"
   cp "$ROOT/scripts/$f" "$DEST/scripts/$f"
@@ -61,7 +61,8 @@ cp "$ROOT/installer/README.md" "$DEST/README.md"
 # Separate local backup state created by INSTALL.sh; never include unique user partitions.
 (
  cd "$DEST"
- find assets files backups scripts -type f -print0 | sort -z | xargs -0 sha256sum > manifest.sha256
+ { find assets files backups scripts -type f -print0; printf '%s\0' INSTALL.sh README.md; } |
+   sort -z | xargs -0 sha256sum > manifest.sha256
  chmod 600 manifest.sha256
  chmod -R go-rwx assets files backups
  chmod 755 INSTALL.sh

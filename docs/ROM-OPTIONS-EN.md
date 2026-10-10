@@ -1,3 +1,5 @@
+> **Historical candidate assessment (before the 10 October LineageOS migration).** LineageOS 18.1 + NikGapps **has since booted and was inspected on the reference S55**. Any statements below claiming it has not been flashed are preserved as historical findings, not the current status. See the [current installation audit](INSTALLER-SAFETY-AUDIT-2026-10.md) and [migration report](LINEAGE18-MIGRATION-ROOT-CAUSE-2026-10.md).
+
 # DOOGEE S55 — Android upgrade candidates and alternative OSes (October 2026)
 
 **Status: research and static testing, NOT proof of a successful upgrade.** Only the existing crDroid 7.16 / Android 11 upgrade and its S55-specific fixes have been validated on the actual phone. The user is currently charging the handset from a wall charger; no firmware modifications are being attempted.

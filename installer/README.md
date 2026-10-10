@@ -1,6 +1,6 @@
 # DOOGEE S55 → LineageOS 18.1 + Google Play, one command
 
-**Target:** standard DOOGEE **S55**, original Android 8.0 firmware, MediaTek MT6750 family, eMMC GPT matching the documented stock S55 layout. **Not S55 Lite.** Host: Linux, USB data cable, current official Android Platform Tools (ADB / fastboot), bash, Python 3, xz, zstd, pv, sha256sum and e2fsck/resize2fs/sgdisk **in the bundled S55 TWRP recovery**.
+**Target:** standard DOOGEE **S55**, original Android 8.0 firmware, MediaTek MT6750 family, eMMC GPT matching the documented stock S55 layout. **Not S55 Lite.** Host: Linux, USB data cable, current official Android Platform Tools (ADB / fastboot), bash, Python 3, xz, zstd, sha256sum and e2fsck/resize2fs/sgdisk **in the bundled S55 TWRP recovery**.
 
 ## 1. Build the kit on the maintainer's authorized Linux workstation
 
@@ -27,11 +27,21 @@ cd local-kit
 
 The single command guides through unlocking the bootloader (physical confirmation if necessary), entering the exact TWRP, safe backups, exact partition resizing, verified installation of LineageOS 18.1 and NikGapps Core, vendor/fingerprint/thermal compatibility, fresh user storage, and Android 11 boot and Google services checks.
 
+An already running Android 11 S55 can be audited without flashing or wiping with ./INSTALL.sh --verify. This read-only mode checks Android boot completion, SELinux, Google services, and battery/thermal telemetry. Fingerprint persistence still needs physical enrollment and reboot. A checkpoint bound to a recovery identity is rechecked against actual partitions before it can be skipped; ambiguous interrupted GApps installations stop for manual diagnosis.
+
+Install order: flash ROM; stage and install NikGapps Core 11 from TWRP /tmp RAM; format userdata; prepare vendor CE/DE directories; patch healthd and install verified boot. This matches the upstream A-only ROM/GApps/data-wipe sequence. Recovery RAM must have at least 180 MiB free. This RAM staging flow remains unvalidated on a second untouched stock S55.
+
+Flash progress uses pv when present, or the bundled pure-Python progress indicator when pv is unavailable. No global software installation is required for progress.
+
+After a partial run, verify all **original** partition backups and GPT checksum without touching a phone by using ./INSTALL.sh --recovery-check. It intentionally does not flash or restore stock; interrupted recovery still requires expert supervision.
+
 For a non-destructive look at the installation plan:
 
 ```bash
 ./INSTALL.sh --plan
 ./INSTALL.sh --check
+./INSTALL.sh --verify
+./INSTALL.sh --recovery-check
 ```
 
 **Human interaction cannot be removed from OEM unlocking, physical key combinations, USB authorization and the initial fingerprint enrollment.** After erasing userdata, Android normally disables USB debugging again: complete the first-run setup, re-enable Developer Options → USB debugging, and authorize the same computer when the installer requests it. The script then verifies Android 11, Google packages, real thermal sensors and the 25% battery-saver setting. If ADB is still unavailable, the script may record only a user-confirmed visible boot, explicitly marked **unverified**; it will never silently report completed automated tests. If an image, checksum or GPT geometry does not match, installation stops. No universal promise is made for unknown board revisions.

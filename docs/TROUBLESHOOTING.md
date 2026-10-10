@@ -1,3 +1,5 @@
+> **Two procedures coexist.** Entries referring to agZ/crDroid are historical. For the currently maintained LineageOS 18.1 + GApps one-command kit and guarded stopping rules, see [installation audit](INSTALLER-SAFETY-AUDIT-2026-10.md).
+
 # Doogee S55 — Troubleshooting / Dépannage
 
 [← README](../README.md) · [Fingerprint](FINGERPRINT-FIX.md) · [Technical notes](TECHNICAL-NOTES.md)

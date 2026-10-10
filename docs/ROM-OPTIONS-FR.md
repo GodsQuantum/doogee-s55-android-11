@@ -1,3 +1,5 @@
+> **Rapport historique antérieur au passage à LineageOS le 10 octobre.** LineageOS 18.1 + NikGapps a ensuite démarré et a été contrôlé sur notre S55. Les mentions ci-dessous « non installé / non testé » sont conservées comme historique, **pas comme état actuel**. Voir [audit installateur](INSTALLER-SAFETY-AUDIT-2026-10.md) et [rapport migration](LINEAGE18-MIGRATION-ROOT-CAUSE-2026-10.md).
+
 # DOOGEE S55 — Versions Android et autres OS (recherche octobre 2026)
 
 > **Important — état réel :** ce document compare des candidats. **Seuls Android 11/crDroid 7.16 et les correctifs décrits dans les guides historiques ont été effectivement validés sur notre S55.** Aucune ROM alternative de cette page n'a encore été démarrée sur l'appareil. Le téléphone se recharge actuellement sur secteur, sans connexion USB à Pegasus ; ne rien flasher pendant la charge.

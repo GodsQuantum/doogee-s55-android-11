@@ -10,8 +10,8 @@ MODE="${1:-}"
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 ZIP="${S55_GAPPS_ZIP:-$ROOT/files/candidates/NikGapps-core-arm64-11-20260204-signed.zip}"
 HASH="a56ad7da66e51a6cd1af0b0fb39a1ac167739161624115276b7f8d00633fd0f8"
-# Stage under freshly formatted, mounted /data as validated on the real S55.
-# The kit formats userdata BEFORE installing NikGapps.
+# Offline kit stages the zip in recovery RAM (/tmp), then formats /data.
+# An encrypted factory /data must never be assumed readable by TWRP.
 REMOTE="${S55_GAPPS_REMOTE:-/data/local/tmp/s55-NikGapps-core-arm64-11.zip}"
 mapfile -t DEV < <(adb devices | awk '$2=="recovery"{print $1}')
 [[ "${#DEV[@]}" -eq 1 ]] || { echo "Expected S55 TWRP" >&2; exit 1; }

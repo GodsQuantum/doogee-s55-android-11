@@ -4,7 +4,7 @@ set -Eeuo pipefail
 ADB="${ADB:-adb}"
 DISK="/dev/block/mmcblk0"
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-BACKUP_DIR="$ROOT/backups/gpt"
+BACKUP_DIR="${S55_GPT_BACKUP_DIR:-$ROOT/backups/gpt}"
 mkdir -p "$BACKUP_DIR"
 
 command -v "$ADB" >/dev/null 2>&1 || { echo "ERREUR: adb introuvable" >&2; exit 1; }
