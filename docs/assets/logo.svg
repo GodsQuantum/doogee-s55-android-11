@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="title desc">
+  <title id="title">DOOGEE S55 Android 11 community upgrade</title>
+  <desc id="desc">Rugged phone with turquoise Android upgrade arrows</desc>
+  <defs><linearGradient id="scr" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stop-color="#172c3e"/><stop offset="1" stop-color="#0d1825"/></linearGradient></defs>
+  <rect x="62" y="16" width="132" height="224" rx="23" fill="#18293a" stroke="#45d5cb" stroke-width="8"/>
+  <rect x="72" y="38" width="112" height="170" rx="10" fill="url(#scr)"/>
+  <path d="M96 27h64" fill="none" stroke="#85a5ba" stroke-width="5" stroke-linecap="round"/>
+  <circle cx="128" cy="223" r="6" fill="#7ddcad"/>
+  <path d="M89 137a44 44 0 0 1 66-54" fill="none" stroke="#40d8d0" stroke-width="10" stroke-linecap="round"/>
+  <path d="m147 68 17 20-25 4" fill="none" stroke="#40d8d0" stroke-width="9" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M169 112a44 44 0 0 1-66 54" fill="none" stroke="#7adb9c" stroke-width="10" stroke-linecap="round"/>
+  <path d="m110 180-17-20 25-4" fill="none" stroke="#7adb9c" stroke-width="9" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="128" cy="126" r="12" fill="#40d8d0"/>
+  <path d="M123 126h10m-5-5v10" stroke="#0b1522" stroke-width="3" stroke-linecap="round"/>
+</svg>

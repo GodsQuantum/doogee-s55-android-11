@@ -14,7 +14,7 @@ SCRIPTS="$ROOT/scripts"
 LOG="$BACK/install.log"
 die(){ printf 'STOP: %s\n' "$*" >&2; exit 1; }
 step(){ printf '\n==> %s\n' "$*"; }
-for c in sha256sum xz zstd awk python3 stat; do
+for c in sha256sum xz zstd awk python3 stat df; do
   command -v "$c" >/dev/null || die "Missing Linux command: $c"
 done
 [[ "$MODE" == --check || "$MODE" == --plan || "$MODE" == --install ]] ||
@@ -77,6 +77,9 @@ read -r -p "Type INSTALL-S55-ERASE-ALL to proceed: " answer
 [[ "$answer" == INSTALL-S55-ERASE-ALL ]] || die "Cancelled"
 mkdir -p "$BACK"/backup
 chmod 700 "$BACK" "$BACK/backup"
+free_bytes="$(df -B1 --output=avail "$BACK" | tail -1 | tr -d ' ')"
+[[ "$free_bytes" =~ ^[0-9]+$ && "$free_bytes" -ge 6442450944 ]] ||
+  die "At least 6 GiB host disk space required for private system and radio backups"
 touch "$LOG"; chmod 600 "$LOG"
 exec > >(tee -a "$LOG") 2>&1
 echo "INSTALL_SESSION $(date -Is)"
@@ -241,9 +244,25 @@ if [[ ! -e "$BACK/vendor.ok" ]]; then
   [[ "$(remote 'sha256sum /vendor/etc/selinux/nonplat_sepolicy.cil' | awk '{print $1}')" == e0602bae3099274aec52e4fdf8ba6b121859e8ff35dea08dbc89cce967bd6daf ]] || die "Vendor thermal rules missing"
   touch "$BACK/vendor.ok"
 fi
+if [[ ! -e "$BACK/data.ok" ]]; then
+  step "Format original p30 userdata, then initialize vendor CE/DE"
+  recovery_checks
+  adb shell 'umount /sdcard 2>/dev/null || true; umount /data 2>/dev/null || true'
+  [[ -z "$(remote 'mount | grep mmcblk0p30 || true')" ]] || die "Data still mounted"
+  adb shell 'mke2fs -t ext4 /dev/block/mmcblk0p30'
+  adb shell 'tune2fs -m 0 -r 4096 -u 10010 /dev/block/mmcblk0p30'
+  adb shell 'e2fsck -fn /dev/block/mmcblk0p30 >/tmp/s55-fsck-data 2>&1; test $? -eq 0'
+  adb shell 'mount -t ext4 -o rw /dev/block/mmcblk0p30 /data'
+  # Reuse the exact idempotent helper validated on the physical S55.
+  bash "$SCRIPTS/prepare-lineage18-userdata-s55.sh" --apply
+  touch "$BACK/data.ok"
+fi
 if [[ ! -e "$BACK/gapps.ok" ]]; then
   step "Install checked NikGapps Core before formatting /data"
   adb shell 'mount -o remount,ro /system 2>/dev/null || true'
+  [[ "$(remote 'mount | grep " on /data "')" == *'mmcblk0p30 on /data type ext4'* ]] ||
+    die "GApps requires freshly mounted userdata from p30"
+  adb shell 'mkdir -p /data/local/tmp; chmod 0755 /data/local/tmp'
   S55_GAPPS_ZIP="$ASSET/nikgapps-core-11.zip" bash "$SCRIPTS/install-nikgapps-core11-s55.sh" --install
   adb shell 'mount -t ext4 -o ro,noload /dev/block/mmcblk0p28 /system 2>/dev/null || true'
   [[ "$(remote 'find /system -iname "*Phonesky*.apk" | head -1')" == *Phonesky* ]] ||
@@ -259,18 +278,7 @@ if [[ ! -e "$BACK/thermal.ok" ]]; then
   # Already present and verified in the golden vendor image; no extra vendor patch.
   touch "$BACK/thermal.ok"
 fi
-if [[ ! -e "$BACK/data.ok" ]]; then
-  step "Format original p30 userdata, then initialize vendor CE/DE"
-  recovery_checks
-  adb shell 'umount /sdcard 2>/dev/null || true; umount /data 2>/dev/null || true'
-  [[ -z "$(remote 'mount | grep mmcblk0p30 || true')" ]] || die "Data still mounted"
-  adb shell 'mke2fs -t ext4 -b 4096 -I 256 -m 0 -O has_journal,ext_attr,resize_inode,filetype,extent,sparse_super,large_file,uninit_bg /dev/block/mmcblk0p30'
-  adb shell 'tune2fs -r 4096 -u 10010 /dev/block/mmcblk0p30'
-  adb shell 'e2fsck -fn /dev/block/mmcblk0p30 >/tmp/s55-fsck-data 2>&1; test $? -eq 0'
-  adb shell 'mount -t ext4 -o rw /dev/block/mmcblk0p30 /data'
-  adb shell 'mkdir -p /data/vendor_de /data/vendor_ce; chown 0:0 /data/vendor_de /data/vendor_ce; chmod 0771 /data/vendor_de /data/vendor_ce; chcon u:object_r:vendor_data_file:s0 /data/vendor_de /data/vendor_ce; sync'
-  touch "$BACK/data.ok"
-fi
+
 if [[ ! -e "$BACK/boot.ok" ]]; then
   recovery_checks
   step "Install EXACT previously validated S55 2020 boot; stock boot is backed up"
@@ -291,22 +299,58 @@ adb shell 'mount -t ext4 -o ro,noload /dev/block/mmcblk0p28 /system 2>/dev/null 
   die "Healthd is not the final validated version"
 [[ "$(remote 'sha256sum /vendor/lib64/libfprint-x64.so' | awk '{print $1}')" == 3d89603ed3025bdc14e65d6269024c52920808c747aeb2d79417741d7cc7f9f6 ]] ||
   die "Fingerprint HAL not patched"
-step "Boot LineageOS 18.1 — first setup can be slower than later boots"
+step "Boot LineageOS 18.1 — complete the first-run setup on the phone"
 adb reboot system
-for ((i=1;i<=180;i++)); do
-  if [[ "$(adb devices | awk '$2=="device"{print $2}')" == device ]] &&
-     [[ "$(remote 'getprop sys.boot_completed' || true)" == 1 ]]; then
-    adb shell 'settings put global low_power_trigger_level 25; settings put global automatic_power_save_mode 0; settings put global mobile_data_always_on 0; settings put global ble_scan_always_enabled 0'
-    echo "ANDROID_BOOT_COMPLETE"
-    adb shell 'dumpsys battery | grep -E "level:|voltage:|temperature:"'
-    adb shell 'dumpsys thermalservice | grep "Current temperatures from HAL:" -A5'
-    adb shell 'pm list packages | grep -E "com.google.android.gms|com.android.vending|com.google.android.gsf"'
-    adb shell getenforce
-    touch "$BACK/installed.ok"
-    echo "SUCCESS. Private original backups: $BACK/backup"
-    echo "Finish Google setup and enroll fingerprint physically, then test after reboot."
-    exit 0
-  fi
+echo "A clean Android installation usually resets USB DEBUGGING."
+echo "Complete Android setup, enable Developer Options / USB debugging and authorize this computer."
+echo "The SAME installer resumes automatically once authorized; do not flash again."
+phone_ready(){
+  [[ "$(adb devices | awk '$2=="device"{n++} END{print n+0}')" -eq 1 ]] &&
+    [[ "$(remote 'getprop sys.boot_completed' || true)" == 1 ]]
+}
+for ((i=1;i<=90;i++)); do
+  phone_ready && break
   sleep 2
 done
-die "Android boot not confirmed. Remain ready to recover via TWRP and PRIVATE backups."
+if ! phone_ready; then
+  echo "ADB NOT AUTHORIZED YET. Android can be fully working without USB debugging."
+  read -r -p "Enable USB debugging on Android and press Enter to retry verification: " _
+  for ((i=1;i<=90;i++)); do
+    phone_ready && break
+    sleep 2
+  done
+fi
+if ! phone_ready; then
+  echo "AUTOMATIC VALIDATION NOT POSSIBLE: USB debugging/authorization missing or phone did not boot."
+  read -r -p "Type ANDROID-BOOTED only if you can SEE and USE the LineageOS home screen: " answer
+  if [[ "$answer" == ANDROID-BOOTED ]]; then
+    touch "$BACK/visual-boot-only.ok"
+    echo "VISUAL BOOT CONFIRMED BY USER. Google/sensors/battery verification PENDING."
+    echo "Keep private backups at $BACK/backup; reconnect with USB debugging to audit further."
+    exit 0
+  fi
+  die "Boot could not be confirmed; inspect phone/recovery before any more flashing"
+fi
+echo "ADB_FRAMEWORK_READY; wait for stable Android services"
+sleep 25
+phone_ready || die "Android framework dropped ADB after first boot"
+[[ "$(remote 'getprop ro.build.version.release')" == 11 ]] || die "Unexpected Android version"
+[[ "$(remote 'getenforce')" == Enforcing ]] || die "SELinux unexpectedly not Enforcing"
+apps="$(remote 'pm list packages')"
+for pkg in com.google.android.gms com.android.vending com.google.android.gsf; do
+  grep -Fqx "package:$pkg" <<<"$apps" || die "Required Google package absent: $pkg"
+done
+temp="$(remote 'dumpsys battery | sed -n "s/.*temperature: *//p" | head -1')"
+[[ "$temp" =~ ^[0-9]+$ && "$temp" -gt 0 ]] || die "Battery temperature telemetry missing"
+thermal="$(remote 'dumpsys thermalservice')"
+for name in CPU_T GPU_T BAT_T SKIN_T; do
+  grep -Fq "mName=$name" <<<"$thermal" || die "Thermal HAL missing $name"
+done
+adb shell 'settings put global low_power_trigger_level 25; settings put global automatic_power_save_mode 0; settings put global mobile_data_always_on 0; settings put global ble_scan_always_enabled 0'
+[[ "$(remote 'settings get global low_power_trigger_level')" == 25 ]] || die "Battery saver not persisted"
+echo "ANDROID11_GOOGLE_THERMAL_BATTERY_VERIFIED"
+adb shell 'dumpsys battery | grep -E "level:|voltage:|temperature:"'
+adb shell 'dumpsys thermalservice | grep "Current temperatures from HAL:" -A5'
+touch "$BACK/installed.ok"
+echo "INSTALLATION VERIFIED. Private original backups: $BACK/backup"
+echo "Enroll fingerprint and validate unlocking across another reboot on the phone."

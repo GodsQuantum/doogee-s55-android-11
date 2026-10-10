@@ -23,8 +23,9 @@ patterns = {
     ),
 }
 
+ROOT = Path(__file__).resolve().parents[1]
 paths = subprocess.check_output(
-    ["git", "ls-files", "-co", "--exclude-standard", "-z"]
+    ["git", "ls-files", "-co", "--exclude-standard", "-z"], cwd=ROOT
 ).split(b"\0")
 
 failures = []
@@ -33,7 +34,7 @@ for raw in paths:
     if not raw:
         continue
 
-    path = Path(raw.decode())
+    path = ROOT / raw.decode()
 
     try:
         text = path.read_text()

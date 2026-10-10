@@ -1,3 +1,5 @@
+> **Historical crDroid installation procedure, not the current LineageOS path.** The recommended October 2026 method is the [single-command LineageOS 18.1 + GApps kit](../installer/README.md).
+
 # Doogee S55 — Android 11 crDroid Vanilla
 
 [← README](../README.md) · [GApps FR](INSTALL-GAPPS-FR.md) · [Fingerprint](FINGERPRINT-FIX.md) · [Dépannage](TROUBLESHOOTING.md)
