@@ -98,7 +98,7 @@ if [[ "$MODE" == --verify ]]; then
   [[ "$(adb devices | awk '$2=="device"{n++} END{print n+0}')" -eq 1 ]] ||
     die "Exactly one authorized Android phone required"
   check_android(){ adb shell "$1" | tr -d '\r'; }
-  [[ "$(check_android 'getprop ro.product.device')" == S55 ]] || die "Not DOOGEE S55"
+  [[ "$(check_android 'getprop ro.vendor.build.fingerprint')" == DOOGEE/S55/S55:* ]] || die "Not DOOGEE S55 vendor"
   [[ "$(check_android 'getprop ro.build.version.release')" == 11 ]] || die "Not Android 11"
   [[ "$(check_android 'getprop sys.boot_completed')" == 1 ]] || die "Android not fully booted"
   [[ "$(check_android getenforce)" == Enforcing ]] || die "SELinux not enforcing"
@@ -108,13 +108,16 @@ if [[ "$MODE" == --verify ]]; then
   done
   battemp="$(check_android 'dumpsys battery | sed -n "s/.*temperature: *//p" | head -1')"
   [[ "$battemp" =~ ^[0-9]+$ && "$battemp" -gt 0 ]] || die "Battery temperature telemetry absent"
-  batvolt="$(check_android 'dumpsys battery | sed -n "s/.*voltage: *//p" | head -1')"
+  batvolt="$(check_android 'dumpsys battery | sed -n "s/^[[:space:]]*voltage:[[:space:]]*//p" | head -1')"
   [[ "$batvolt" =~ ^[0-9]+$ && "$batvolt" -ge 3000 && "$batvolt" -le 4500 ]] ||
     die "Invalid battery voltage telemetry (expected millivolts)"
   thermal="$(check_android 'dumpsys thermalservice')"
   for sensor in CPU_T GPU_T BAT_T SKIN_T; do
     grep -Fq "mName=$sensor" <<<"$thermal" || die "Missing thermal sensor $sensor"
   done
+  [[ "$(check_android "getprop persist.sys.phh.fingerprint.nocleanup")" == true ]] ||
+    die "MicroArray retention not set; apply scripts/enable-microarray-persistence.sh --apply"
+  echo "FINGERPRINT_RETENTION_PROPERTY_ENABLED; PHYSICAL_UNLOCK_AFTER_REBOOT_STILL_REQUIRED"
   for setting in low_power_trigger_level automatic_power_save_mode mobile_data_always_on ble_scan_always_enabled; do
     echo "NATIVE_POWER_SETTING $setting=$(check_android "settings get global $setting")"
   done
@@ -588,6 +591,8 @@ adb shell 'settings put global low_power_trigger_level 25; settings put global a
 [[ "$(remote 'settings get global automatic_power_save_mode')" == 0 ]] || die "Automatic Battery Saver not selected"
 [[ "$(remote 'settings get global mobile_data_always_on')" == 0 ]] || die "Mobile data background optimization not persisted"
 [[ "$(remote 'settings get global ble_scan_always_enabled')" == 0 ]] || die "BLE background scanning setting not persisted"
+bash "$SCRIPTS/enable-microarray-persistence.sh" --apply ||
+  die "MicroArray PHH retention could not be enabled (manual remediation required)"
 echo "ANDROID11_GOOGLE_THERMAL_BATTERY_VERIFIED"
 adb shell 'dumpsys battery | grep -E "level:|voltage:|temperature:"'
 adb shell 'dumpsys thermalservice | grep "Current temperatures from HAL:" -A5'
