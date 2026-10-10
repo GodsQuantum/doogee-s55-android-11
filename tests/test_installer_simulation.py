@@ -21,6 +21,16 @@ def install_fake_tool(bin_dir: Path, name: str, body: str) -> None:
     path.chmod(0o755)
 
 
+# Stream accounting is tested without disk images or physical devices.
+stream_script = ROOT / "scripts/progress-stream.py"
+dummy = (bytes(range(256)) * 2048) + b"TAIL"
+ok = subprocess.run(["python3", "-u", str(stream_script), str(len(dummy))],
+                    input=dummy, capture_output=True, timeout=10)
+assert ok.returncode == 0 and ok.stdout == dummy
+short = subprocess.run(["python3", "-u", str(stream_script), str(len(dummy)+1)],
+                       input=dummy, capture_output=True, timeout=10)
+assert short.returncode != 0, "Byte-count mismatch was silently accepted"
+
 with tempfile.TemporaryDirectory(prefix="local-s55-test-", dir=ROOT) as temp:
     sandbox = Path(temp)
     kit = sandbox / "kit"
@@ -56,6 +66,7 @@ elif args and args[0] == 'shell':
     elif 'getprop ro.build.version.release' in cmd: print(os.environ.get('S55_MOCK_VERSION', '11'))
     elif 'getprop ro.twrp.version' in cmd: print(os.environ.get('S55_MOCK_TWRP', '3.1.1-0' if os.environ.get('S55_MOCK_STATE')=='recovery' else ''))
     elif 'getprop sys.boot_completed' in cmd: print('1')
+    elif cmd.startswith('settings get global '): print('25' if cmd.endswith('low_power_trigger_level') else '0')
     elif 'getenforce' in cmd: print('Enforcing')
     elif cmd == 'id': print('uid=0(root) gid=0(root)')
     elif 'cat /sys/class/power_supply/battery/capacity' in cmd: print('65')
@@ -64,7 +75,7 @@ elif args and args[0] == 'shell':
     elif cmd.startswith('df -k /tmp'): print('580000')
     elif 'pm list packages' in cmd:
         print('package:com.google.android.gms\\npackage:com.android.vending\\npackage:com.google.android.gsf')
-    elif 'dumpsys battery' in cmd: print('310')
+    elif 'dumpsys battery' in cmd: print('3950' if 'voltage' in cmd else '310')
     elif 'dumpsys thermalservice' in cmd:
         print('mName=CPU_T\\nmName=GPU_T\\nmName=BAT_T\\nmName=SKIN_T')
     else:
@@ -166,6 +177,19 @@ sys.exit(96)
     assert result.returncode != 0 and "Original raw checksum mismatch: nvdata" in result.stderr
     assert log.read_text() == calls_before
     one_hash.write_text(valid_hash)
+
+    # A power loss while ANY destructive stage is in flight cannot
+    # silently start another write on the next execution.
+    for stage in ("repartition", "cache", "system", "vendor",
+                  "gapps", "data", "thermal", "boot"):
+        marker = kit / "private-install-state" / (stage + ".inflight")
+        marker.write_text("TEST_INTERRUPTED_STAGE\n")
+        previous_calls = log.read_text()
+        result = run("--install", stdin="INSTALL-S55-ERASE-ALL\n")
+        assert result.returncode != 0, (stage, result.stdout, result.stderr)
+        assert f"Interrupted {stage}" in result.stdout, (stage, result.stdout)
+        assert log.read_text() == previous_calls, "Interrupted stage unexpectedly contacted ADB"
+        marker.unlink()
 
     # A manifest bit flip must fail before opening a connection to the phone.
     previous_calls = log.read_text()
