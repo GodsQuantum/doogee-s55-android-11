@@ -1,6 +1,6 @@
 # DOOGEE S55 — Battery drain / offline charging (FR + EN)
 
-Status: 2026-10-09. Diagnosis ongoing; no firmware or hardware fix validated. This is NOT a flash guide.
+**Update 10 October 2026:** The battery voltage, real battery temperature, and thermal HAL on LineageOS 18.1 have subsequently been **repaired and verified** (see [validated battery/thermal report](BATTERY-THERMAL-LINEAGE18-2026-10.md)). The historical 9 October evidence below remains useful for understanding the separate **physical deep-discharge/KPOC limitation**, which no Android-level software fix can guarantee against. This is NOT a flash guide.
 
 **Update on wall charging:** After severe 0–1% reporting on the Pegasus USB hub, the owner reports successful charging to **20% with a wall adapter** on October 9, 2026. This rules out the blanket claim that the phone cannot charge at all; it does **not** prove that the battery is healthy or that the Android fuel gauge is accurate. Investigate the distinction between PC/hub USB current and wall-adapter charging, then profile battery drain and suspend when the device can remain powered up. Do not buy a battery or flash firmware based solely on the earlier 0 mV/0 °C Android placeholders.
 
