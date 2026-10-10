@@ -23,6 +23,10 @@ def main() -> None:
     assert "^[[:space:]]*voltage:" in installer
     assert "enable-microarray-persistence.sh" in installer
     assert "enable-microarray-persistence.sh" in builder
+    assert "FINGERPRINT_PATCH_AND_PHH_RETENTION_VERIFIED_READ_ONLY" in installer
+    assert "FINGERPRINT ACCEPTANCE:" in installer
+    assert "ro.hardware.fingerprint" in installer
+    assert "sha256sum /vendor/lib64/libfprint-x64.so" in installer
     assert "target-recovery-id.sha256" in installer
     assert "gapps.inflight" in installer and "cache.ok" in installer
     assert "stage_begin" in installer and "stage_done" in installer
