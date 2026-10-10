@@ -1,6 +1,6 @@
 # DOOGEE S55 — thermal HAL and proc_mtktz SELinux audit (10 October 2026)
 
-**State: exact policy gap found; a minimal correction compiles offline but has NOT been flashed or installed.** Device still uses enforcing SELinux. This document is intentionally separate from validated repairs in [ROOT-CAUSE-HEALTHD-VENDOR-2026-10.md](ROOT-CAUSE-HEALTHD-VENDOR-2026-10.md).
+**Historical pre-repair investigation (superseded on 10 October 2026).** The exact two read-only SELinux rules described below **were subsequently installed and verified on the physical S55** under LineageOS 18.1 with SELinux Enforcing. `dumpsys thermalservice` now returns live battery, CPU, GPU and skin temperatures; Android `healthd` also received a separate native `batt_temp` path fix. For the definitive hashes, procedures and rollback use **[validated October thermal and battery repairs](BATTERY-THERMAL-LINEAGE18-2026-10.md)**. Statements below describing a candidate as *not yet installed* refer only to the earlier experimental state.
 
 ## What the device exposes
 

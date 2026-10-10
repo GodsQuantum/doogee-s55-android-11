@@ -1,6 +1,6 @@
 # DOOGEE S55 — Root cause audit: Android 11 / Oreo vendor (10 Oct 2026)
 
-> **Status:** ongoing field validation. The voltage-path fix and two vendor HIDL dependency fixes booted successfully on the physical S55. The two ARM32 sensor binary fixes were installed and still require post-reboot confirmation. All changes are limited to specific system/vendor files; no bootloader, GPT, preloader, battery thresholds, or factory radio partitions have been modified.
+> **Status update (10 October 2026):** All four legacy linker/voltage repairs were validated on real Android 11, the five MTK sensors were enumerated, and LineageOS 18.1 has now been installed. The subsequent **battery temperature and thermal HAL fixes are also installed and verified under SELinux Enforcing**; see [definitive LineageOS battery/thermal report](BATTERY-THERMAL-LINEAGE18-2026-10.md). Remaining performance/deep-discharge limitations are distinct from these repaired telemetry issues. No bootloader, GPT, preloader, battery safety threshold or factory radio partition was changed.
 
 [FR — choix des ROM](ROM-OPTIONS-FR.md) · [Battery history](BATTERY-POWER-AUDIT-2026-10.md) · [Fingerprint](FINGERPRINT-FIX.md)
 

@@ -49,7 +49,7 @@ The goal is not to hide these problems behind one-off commands. The guides expla
 
 ## Choose your path
 
-**October 2026 update:** We are now evaluating newer Android versions and alternative operating systems alongside a battery/charging investigation. **Do not flash an Android 13+ SAR GSI directly onto this non-SAR S55.** Both the documented crDroid 7.16 and the new LineageOS 18.1 Android 11 installation have now booted on the physical S55; newer SAR GSIs have not been validated on-device.
+**October 2026 update:** LineageOS 18.1 Android 11 is now installed and running on the actual S55. Battery voltage, real temperature and thermal HAL readings were repaired and verified with SELinux Enforcing. **Do not directly flash an Android 13+ SAR GSI onto this non-SAR S55.** Older firmware/KPOC behavior and physical deep-discharge reliability cannot be guaranteed by these Android-level repairs.
 
 - **[LineageOS 18.1 with NikGapps Core installed on the real S55](docs/LINEAGE18-MIGRATION-ROOT-CAUSE-2026-10.md):** validated image write/readback, userdata compatibility fix, and two Android boot-complete tests. Run the guarded [vendor CE/DE directory preparation](scripts/prepare-lineage18-userdata-s55.sh) after future full userdata wipes.
 - **[Android 13: hardware compatibility gate and LineageOS 18.1 fallback](docs/ANDROID13-FEASIBILITY-DECISION-2026-10.md):** exact local LineageOS 20 image fails the stock non-SAR/Oreo vendor gate; a boot/vendor port is needed before any meaningful on-device test.
@@ -60,7 +60,7 @@ The goal is not to hide these problems behind one-off commands. The guides expla
 - **[Battery and power-off charging investigation](docs/RESEARCH-DEEP-DISCHARGE-2026-10.md):** charging from a wall charger recovered to 20% according to the owner; the earlier PC USB/deep-discharge failures are not proof of an irreparably dead battery.
 - **[Battery, wakelocks, thermal HAL and read-only recovery audit — October 2026](docs/BATTERY-POWER-AUDIT-2026-10.md):** verified native power settings and historical standby data; private modem/vendor backups.
 - **[Verified Android 11 ↔ Oreo vendor compatibility fixes](docs/ROOT-CAUSE-HEALTHD-VENDOR-2026-10.md):** repaired actual battery voltage readings, restored two missing stock vendor libraries and corrected legacy sensor ELF logging dependencies, with guarded rollback scripts.
-- **[Remaining thermal/SELinux audit](docs/THERMAL-SELINUX-INVESTIGATION-2026-10.md):** scoped read policy compiled off-device; **not installed**, and Android battery temperature remains unresolved.
+- **[Battery temperature, thermal HAL and power optimizations — validated on S55](docs/BATTERY-THERMAL-LINEAGE18-2026-10.md):** actual battery temperature and CPU/GPU/skin HAL values restored under SELinux Enforcing; native battery saver at 25%, fully reversible patches. Historical investigation: [SELinux thermal root cause](docs/THERMAL-SELINUX-INVESTIGATION-2026-10.md).
 
 ### 🇫🇷 Français
 
