@@ -10,3 +10,4 @@ lint:
 	@python3 tests/test_one_command_installer.py
 	@python3 tests/test_installer_simulation.py
 	@python3 tests/test_repo_docs.py
+	@python3 tests/test_rilproxy_networkinfo.py

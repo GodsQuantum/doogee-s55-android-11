@@ -128,6 +128,10 @@ if [[ "$MODE" == --verify ]]; then
     die "MicroArray enumerator hash mismatch; verified vendor patch missing"
   [[ "$(check_android 'getprop persist.sys.phh.fingerprint.nocleanup')" == true ]] ||
     die "MicroArray retention not set; apply scripts/enable-microarray-persistence.sh --apply"
+  # On S55 PHH restart_ril=true caused repeated boot/preloader transitions.
+  [[ "$(check_android 'getprop persist.sys.phh.restart_ril')" != true ]] ||
+    die "Unsafe PHH restart_ril=true caused reboot loops on S55"
+  echo "RIL_AUTORESTART_LOOP_PROTECTION_OK"
   echo "FINGERPRINT_PATCH_AND_PHH_RETENTION_VERIFIED_READ_ONLY"
   echo "FINGERPRINT_PHYSICAL_ACCEPTANCE: enroll, reboot, unlock with SAME finger (user action)"
   for setting in low_power_trigger_level automatic_power_save_mode mobile_data_always_on ble_scan_always_enabled; do
