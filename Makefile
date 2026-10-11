@@ -11,3 +11,4 @@ lint:
 	@python3 tests/test_installer_simulation.py
 	@python3 tests/test_repo_docs.py
 	@python3 tests/test_rilproxy_networkinfo.py
+	@python3 tests/test_rilproxy_trial_harness.py
