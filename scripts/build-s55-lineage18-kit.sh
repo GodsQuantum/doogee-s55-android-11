@@ -51,7 +51,8 @@ for f in repartition-gapps.sh decrypt-fstab.sh \
   fix-vendor-sensor-log-s55.sh fix-healthd-voltage.sh \
   fix-lineage18-healthd-temperature.sh fix-lineage18-thermal-sepolicy.sh \
   patch-healthd-voltage.py patch-lineage18-healthd-temperature.py progress-stream.py \
-  install-nikgapps-core11-s55.sh prepare-lineage18-userdata-s55.sh enable-microarray-persistence.sh; do
+  install-nikgapps-core11-s55.sh prepare-lineage18-userdata-s55.sh \
+  enable-microarray-persistence.sh diagnose-battery.sh; do
   [[ -f "$ROOT/scripts/$f" ]] || fail "Missing Git source scripts/$f"
   cp "$ROOT/scripts/$f" "$DEST/scripts/$f"
 done

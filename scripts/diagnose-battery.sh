@@ -24,12 +24,34 @@ phone() { timeout 20 adb -s "$serial" shell "$1" 2>&1 || true; }
 printf '\n== PROPERTIES ==\n'
 phone 'getprop ro.product.model; getprop ro.build.version.release; getprop ro.bootmode; getprop ro.boot.bootreason; getprop sys.boot_completed; getprop ro.twrp.version; getprop ro.enable_boot_charger_mode; getprop ro.charger_mode_autoboot'
 printf '\n== BATTERY KERNEL INTERFACES ==\n'
-phone 'for d in /sys/class/power_supply/*; do [ -d "$d" ] || continue; echo "### $d"; for f in type status capacity health present voltage_now current_now current_avg charge_full charge_full_design temp online input_current_limit; do [ -r "$d/$f" ] && { printf "%s=" "$f"; cat "$d/$f"; }; done; done'
+# MT6750 S55 exposes batt_vol (uV), batt_temp (0.1 C) instead of
+# standard voltage_now and temp. Read only, no ADB root.
+phone 'for d in /sys/class/power_supply/*; do
+  [ -d "$d" ] || continue
+  echo "### $d"
+  for f in type status capacity health present voltage_now batt_vol temp batt_temp current_now BatteryAverageCurrent current_avg ChargerVoltage charge_counter charge_full charge_full_design online current_max input_current_limit; do
+    [ -f "$d/$f" ] || continue
+    printf "%s=" "$f"
+    cat "$d/$f" 2>/dev/null || printf "UNAVAILABLE (permissions)\n"
+  done
+done'
 printf '\n== BATTERY SERVICE ==\n'
 phone 'dumpsys battery'
+printf '\n== THERMAL HAL ==\n'
+phone 'dumpsys thermalservice | grep -E "Thermal Status|mName=(BAT_T|SKIN_T|CPU_T|GPU_T)|ThermalHAL" | head -n 28'
+printf '\n== NATIVE POWER SETTINGS ==\n'
+phone 'for key in low_power_trigger_level automatic_power_save_mode mobile_data_always_on ble_scan_always_enabled wifi_scan_always_enabled airplane_mode_on; do printf "%s=" "$key"; settings get global "$key"; done'
+printf '\nNOTE: charge_counter and USB Max charging current do not measure true cell capacity or actual USB current.\n'
+printf 'NOTE: a working battery display does not demonstrate off-mode charging or recovery after 0%%.\n'
 printf '\n== POWER AND IDLE ==\n'
 phone 'dumpsys power | head -n 90'
 phone 'dumpsys deviceidle | head -n 80'
+printf '\n== RIL / RADIO HEALTH (IMPORTANT FOR IDLE DRAIN) ==\n'
+phone 'printf "ril-proxy="; getprop init.svc.ril-proxy; printf "ril-daemon-mtk="; getprop init.svc.ril-daemon-mtk; printf "sim_state="; getprop gsm.sim.state; printf "PHH_RIL_AUTO_RESTART="; getprop persist.sys.phh.restart_ril'
+printf '\n== RIL CRASH COUNT AND ANDROID PHONE PROCESS DEATHS ==\n'
+phone 'logcat -d -b crash -v brief 2>/dev/null | grep -c -E "Fatal signal.*rilproxy|Fatal signal.*Ril Proxy Main" || true'
+phone 'logcat -d -b events -v brief 2>/dev/null | grep -c -E "am_proc_died.*com.android.phone" || true'
 printf '\n== BATTERYSTATS ==\n'
 phone 'dumpsys batterystats --charged | head -n 130'
-echo 'READ ONLY. Output may contain identifying info: do NOT commit logs.'
+echo 'READ ONLY. Never enable RIL auto restart in a crash loop without testing.'
+echo 'Output may contain identifying info: do NOT commit logs.'

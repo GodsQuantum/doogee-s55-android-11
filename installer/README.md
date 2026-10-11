@@ -77,3 +77,14 @@ Official upstream references: [ADB / Fastboot](https://developer.android.com/too
 On the final S55 LineageOS 18.1 GSI, the installer activates PHH fingerprint cleanup retention only after verifying the known-good MicroArray patched library. The helper scripts/enable-microarray-persistence.sh can be run separately (--check read-only, --apply guarded and reversible). Temporary root ADB, where available, is disabled immediately after the property update. Fingerprint templates are neither copied nor erased.
 
 Our reference S55 passed a physical post-reboot unlock test, confirmed by its owner on 10 October 2026. On each newly converted S55, enroll a finger, reboot and complete any required first PIN unlock; then lock the phone again and unlock using that same finger. Repeat across later reboots as a recommended durability check. The --verify audit confirms the configuration is present; it cannot confirm biometric recognition. If the property cannot be set on an unknown stock build, stop instead of falsely claiming a verified fingerprint fix.
+
+
+## Read-only battery and radio health audit
+
+The local offline kit now includes scripts/diagnose-battery.sh. With an already booted and authorized Android S55 attached, run:
+
+    bash scripts/diagnose-battery.sh
+
+This reports Android battery telemetry, MediaTek batt_vol and batt_temp where permissions permit, actual thermal HAL readings, Android native Battery Saver settings, RIL service status and radio process crash/death counts, without requiring root or changing the phone. Logs and identifiers remain private. It is a diagnostic, not a battery calibration or a proof that recovery at 0% works.
+
+The validated reference S55 on 11 October 2026 reported 100%, around 4.3 V, roughly 24 C, a working fingerprint, 25% Battery Saver and enabled Doze. However, on that boot ril-proxy had crashed and stopped, and repeated Android com.android.phone deaths were recorded even with no SIM installed. Do not force a radio restart loop, turn off mobile emergency calling permanently, disable undervoltage cutoffs or blindly replace an old MTK vendor binary. Test unplugged standby separately and use a known-good 5 V / 2 A wall charger for a moderate-charge powered-off charging test; never deliberately deep-discharge a suspected aged battery.

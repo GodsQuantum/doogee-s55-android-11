@@ -1,5 +1,8 @@
 # DOOGEE S55 — Recherche ciblée « deep discharge » (09/10/2026)
 
+> **Updated 11 October 2026:** This document contains historical 9 October battery observations, including erroneous Android voltage/temperature fields before the healthd patches. Current Android 11 telemetry is functional and the reference handset successfully unlocks with its enrolled finger after reboot. This does **not** demonstrate healthy battery capacity, robust powered-off KPOC or safe restart after actual deep discharge. See the latest findings and the no-flash diagnostic sequence in BATTERY-THERMAL-LINEAGE18-2026-10.md. Never intentionally run the handset to 0% or bypass bootloader battery safety.
+
+
 ## 9 octobre 2026, 20:10–20:15 — redémarrage demandé pour chargeur secteur, réserve envisagée
 
 - À 20:10:41, Pegasus ne détectait pas de fastboot mais un appareil MediaTek `0e8d:2008`. Un script temporaire de surveillance n'a exécuté **qu'un seul** `fastboot reboot` dès que le S55 est apparu.
