@@ -132,6 +132,15 @@ if [[ "$MODE" == --verify ]]; then
   [[ "$(check_android 'getprop persist.sys.phh.restart_ril')" != true ]] ||
     die "Unsafe PHH restart_ril=true caused reboot loops on S55"
   echo "RIL_AUTORESTART_LOOP_PROTECTION_OK"
+  ril_hash="$(check_android 'sha256sum /vendor/lib64/librilproxy.so' | awk '{print $1}')"
+  case "$ril_hash" in
+    f47a4248174b4f375d82ccf1a83fc5bb4bcdea0d8594a7904195a37f4b9ac4f0)
+      echo "S55_RIL_NULL_CALLBACK_GUARD_PERSISTENT_VERIFIED" ;;
+    425312124514d3b87e0d8f249bb92596a2b90e6212c9484b524e761227f15f07)
+      echo "S55_RIL_NULL_CALLBACK_GUARD_NOT_INSTALLED_OEM_VENDOR" ;;
+    *)
+      die "Unknown /vendor/lib64/librilproxy.so SHA256; do not overwrite" ;;
+  esac
   echo "FINGERPRINT_PATCH_AND_PHH_RETENTION_VERIFIED_READ_ONLY"
   echo "FINGERPRINT_PHYSICAL_ACCEPTANCE: enroll, reboot, unlock with SAME finger (user action)"
   for setting in low_power_trigger_level automatic_power_save_mode mobile_data_always_on ble_scan_always_enabled; do
