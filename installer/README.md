@@ -88,3 +88,10 @@ The local offline kit now includes scripts/diagnose-battery.sh. With an already 
 This reports Android battery telemetry, MediaTek batt_vol and batt_temp where permissions permit, actual thermal HAL readings, Android native Battery Saver settings, RIL service status and radio process crash/death counts, without requiring root or changing the phone. Logs and identifiers remain private. It is a diagnostic, not a battery calibration or a proof that recovery at 0% works.
 
 The validated reference S55 on 11 October 2026 reported 100%, around 4.3 V, roughly 24 C, a working fingerprint, 25% Battery Saver and enabled Doze. However, on that boot ril-proxy had crashed and stopped, and repeated Android com.android.phone deaths were recorded even with no SIM installed. Do not force a radio restart loop, turn off mobile emergency calling permanently, disable undervoltage cutoffs or blindly replace an old MTK vendor binary. Test unplugged standby separately and use a known-good 5 V / 2 A wall charger for a moderate-charge powered-off charging test; never deliberately deep-discharge a suspected aged battery.
+
+
+## S55 radio crash safety (11 October 2026)
+
+The PHH property persist.sys.phh.restart_ril=true was **experimentally tested and rejected** on the reference S55: it recovered a stopped RIL process, but led to repeated reboot/preloader transitions when Android was restarted. The original false value was restored and the phone booted. The read-only --verify check now fails if the unsafe property is enabled.
+
+A precisely guarded offline candidate for the null callback in librilproxy.so exists in scripts/patch-rilproxy-networkinfo.py. It is NOT automatically used by this installer or bundled in the proprietary golden vendor image because SIM calling and live deployment/rollback have not been qualified. Do not flash it blindly. See docs/RADIO-RILPROXY-2026-10-11.md.

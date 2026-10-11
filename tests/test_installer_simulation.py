@@ -86,6 +86,7 @@ elif args and args[0] == 'shell':
     elif cmd.startswith('df -k /tmp'): print('580000')
     elif 'pm list packages' in cmd:
         print('package:com.google.android.gms\\npackage:com.android.vending\\npackage:com.google.android.gsf')
+    elif 'getprop persist.sys.phh.restart_ril' in cmd: print(os.environ.get('S55_MOCK_RIL_RESTART','false'))
     elif 'getprop persist.sys.phh.fingerprint.nocleanup' in cmd: print(os.environ.get('S55_MOCK_PHH_RETENTION', 'true'))
     elif 'dumpsys battery' in cmd: print('3950' if 'voltage' in cmd else '310')
     elif 'dumpsys thermalservice' in cmd:
@@ -144,6 +145,9 @@ sys.exit(96)
         negative = run("--verify", custom_env=env_overrides)
         assert negative.returncode != 0 and expected in negative.stderr, (env_overrides, negative.stderr)
 
+
+    result = run("--verify", custom_env={"S55_MOCK_RIL_RESTART": "true"})
+    assert result.returncode != 0 and "Unsafe PHH restart_ril=true" in result.stderr, result.stderr
 
     result = run("--verify", custom_env={"S55_MOCK_VENDOR": "DOOGEE/S55_Lite/S55_Lite:8.0.0/test"})
     assert result.returncode != 0 and "Not DOOGEE S55" in result.stderr
