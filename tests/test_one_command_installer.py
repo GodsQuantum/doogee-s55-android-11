@@ -23,6 +23,13 @@ def main() -> None:
     assert "^[[:space:]]*voltage:" in installer
     assert "enable-microarray-persistence.sh" in installer
     assert "enable-microarray-persistence.sh" in builder
+    assert "diagnose-battery.sh" in builder
+    power_diagnostic = (ROOT / "scripts/diagnose-battery.sh").read_text()
+    for field in ("batt_vol", "batt_temp", "ChargerVoltage", "low_power_trigger_level", "dumpsys thermalservice"):
+        assert field in power_diagnostic
+    for mutation in ("adb reboot", "fastboot flash", "fastboot erase", "settings put"):
+        assert mutation not in power_diagnostic
+
     assert "FINGERPRINT_PATCH_AND_PHH_RETENTION_VERIFIED_READ_ONLY" in installer
     assert "FINGERPRINT ACCEPTANCE:" in installer
     assert "ro.hardware.fingerprint" in installer
