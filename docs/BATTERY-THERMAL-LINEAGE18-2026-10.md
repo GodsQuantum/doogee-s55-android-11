@@ -1,5 +1,25 @@
 # DOOGEE S55 — Batterie, températures et veille (10 octobre 2026)
 
+## 11 October 2026 — current state and remaining risks
+
+**Repaired telemetry is not the same thing as a repaired charging system.** The real S55 on Pegasus reports 100%, around 4.30 V, a battery temperature around 24 C, Enforcing SELinux and working biometric unlocking (10 accepted authentications, no fingerprint HAL deaths). Android's Battery Saver threshold is 25% and Doze is enabled. This confirms the Android-facing readings, not battery capacity, wear, actual reserve, low-voltage boot recovery, or charging while powered off.
+
+**Power-off KPOC**: the 2020 boot/kernel already has MediaTek KPOC support, the charger/fuel-gauge services and bootloader off-mode-charge=1. Previous 9 October low-voltage testing nonetheless produced preloader/fastboot cycles and an actual bootloader refusal. The remaining failure can therefore be in powered-off charge transitions, the USB connector, an aged/high-resistance cell, the PMIC or fuel gauge. No safe justification exists to remove the undervoltage cutoff, spoof SOC or install a custom 5% shutdown daemon.
+
+**New real-world radio finding:** on 11 October, the reference S55 with *both SIM slots empty* has init.svc.ril-proxy=stopped following another identical SIGSEGV in librilproxy.so / radio::networkInfoInd on 10 October 23:34. Android event logs show repeated com.android.phone process deaths (130 matching event entries in the captured buffer), and ttyC0 incurred 86 seconds of kernel wakelock out of approximately four minutes of historical batterystats on-battery accounting. These are real stability / standby concerns; they do NOT prove the battery failure mechanism. The exact same symbol was described for other historical MediaTek devices. PHH Android 11 includes a restart_ril property, but blindly enabling it on a repeat-crashing RIL could produce a restart loop and worse drain. No radio or cellular settings were changed, to preserve potential SIM service, emergency calls and recoverability.
+
+**Conservative prevention and next diagnostics:**
+1. Recharge at about 20%, never deliberately discharge the cell to 0%. Retain Android native 25% Battery Saver and thermal/low-voltage protections; do not trust a 5% auto-power-off threshold as a physical reserve.
+2. Test **powered-off charging at a safe moderate indicated SOC, for example 40–60%**, with a known-good 5 V / 2 A charger and cable. Confirm stable charging screen/current and an increasing SOC, with the ability to boot without a PC. This cannot be validated merely by Android ADB while the device is running.
+3. For autonomy, compare unplugged standby readings over an extended interval with radio and SIM state recorded. USB ADB powers the phone and hides real standby current. Do not automatically enable flight mode (which removes cellular/emergency functionality) or an unconditional PHH restart-RIL loop.
+4. If the phone returns to boot loops, refuses low-voltage boot, discharges abruptly or does not charge while off, have the 5 V input, connector, battery voltage under load, battery health/internal resistance and PMIC path measured safely by a repair professional. Avoid forcing power into a lithium-ion cell.
+
+**Latest operator-visible tooling:** scripts/diagnose-battery.sh is read-only and now includes S55-specific batt_vol / batt_temp plus thermal/charging and Battery Saver settings. Permission errors are explicitly recorded; it does not silently treat inaccessible kernel files as zero.
+
+**Fingerprint note:** the 10 October owner physically confirmed successful fingerprint unlock after reboot. An older sentence later in this historical report reporting zero registered fingers was written immediately after a data wipe and does not reflect the final result. See FINGERPRINT-FIX.md.
+
+---
+
 État : LineageOS 18.1 / Android 11, ancien noyau MediaTek, vendor constructeur Oreo. Corrections **testées physiquement** avec SELinux **Enforcing**. Les originaux binaires, données radio et journaux privés sont ignorés par Git.
 
 ## Réparations validées
@@ -49,7 +69,7 @@ L'économiseur à 25 % réduit les risques de décharge rapide, mais **aucun log
 
 ## Fingerprint
 
-Correctif du vendor MicroArray préservé avec contexte SELinux. Le service biométrique était actif sans mort de HAL après plusieurs démarrages. La mémoire utilisateur ayant été formatée, aucune empreinte n'est enregistrée : **il faudra une inscription physique**, puis authentifier ce même doigt après redémarrage pour valider la persistance. Ne jamais considérer l'absence d'empreintes après wipe comme un défaut du capteur.
+**État de cette ancienne étape après effacement, maintenant dépassé :** aucune empreinte n'était initialement enregistrée après le formatage des données. **État définitif du 10 octobre 2026 :** le propriétaire a ensuite enregistré son doigt et confirmé un déverrouillage fonctionnel APRÈS redémarrage complet. Le protocole valide combine le patch binaire d'énumération MicroArray et la rétention PHH persistante. Voir FINGERPRINT-FIX.md.
 
 ## Réversibilité
 

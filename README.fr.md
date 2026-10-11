@@ -69,7 +69,7 @@ Le mode --recovery-check vérifie localement la GPT et les neuf sauvegardes d’
 
 - **S55 standard exclusivement**, pas S55 Lite. Android 13 et plus ne sont pas directement compatibles avec la configuration non-SAR du téléphone.
 - Sauvegarde des partitions d'origine (`system`, `boot`, `vendor`, `recovery`, NVRAM/NVDATA, protections et GPT) avant toute répartition ou écriture. Les identifiants radio restent propres à chaque appareil et hors GitHub.
-- **La panne après décharge profonde n'est pas garantie résolue.** Le seuil matériel de sécurité n'a pas été contourné.
+- **Les mesures de batterie sont réparées, mais la récupération après décharge profonde n'est PAS validée.** Charge téléphone éteint, jauge et vieillissement restent à vérifier. Économiseur natif à 25 %, recharge conseillée vers 20 %, aucune décharge volontaire à 0 %. L'audit du 11 octobre identifie aussi un plantage radio MediaTek récurrent, à traiter avant usage d'une SIM. Le kit inclut le diagnostic sans écriture scripts/diagnose-battery.sh.
 - **Test physique concluant le 10 octobre 2026 : déverrouillage par empreinte après redémarrage confirmé par le propriétaire.** Le kit applique automatiquement les deux corrections (vendor MicroArray + rétention PHH). Sur un autre S55, il faut inscrire un doigt, redémarrer et vérifier le déverrouillage ; le contrôle automatisé ne remplace pas ce test.
 - Le kit passe les vérifications statiques et SHA256 ; **nous n'avons pas encore réalisé l'installation complète sur un second S55 jamais modifié**. Les variantes inconnues sont refusées plutôt que flashées aveuglément.
 
