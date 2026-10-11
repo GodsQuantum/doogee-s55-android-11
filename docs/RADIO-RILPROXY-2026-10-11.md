@@ -1,6 +1,10 @@
-# DOOGEE S55 — MediaTek RIL crash and offline-only candidate
+# DOOGEE S55 — MediaTek RIL null-guard, permanently installed on reference S55
 
-**11 October 2026, updated after live experiments.** The native PHH auto-restart workaround is REJECTED. The callback-guard candidate passed offline tests and was TEMPORARILY loaded twice on the real S55, followed each time by verified restoration of the OEM library. It is NOT installed persistently. The reference S55 has NO SIM; calls/SMS/data remain unvalidated.
+**AUTHORITATIVE UPDATE — 11 Oct 2026, 16:28 Europe/Paris:** The exact ARM64 one-byte RIL callback guard is now **PERMANENTLY installed** in the vendor partition of the real S55. Two Android boots retained patched SHA256 f47a4248174b4f375d82ccf1a83fc5bb4bcdea0d8594a7904195a37f4b9ac4f0. Service ril-proxy and ril-daemon-mtk both ran, two HIDL radio endpoints appeared, one enrolled fingerprint was retained (zero HAL deaths), and SELinux remained Enforcing. No new native RIL crash was observed during the checks. With BOTH SIM slots ABSENT, calling, SMS, mobile data and extended network stability **cannot** be certified.
+
+The previous temporary-tests-only status below is historical, preceding persistent installation.
+
+**Earlier checkpoint 11 October 2026, after initial live experiments.** The native PHH auto-restart workaround is REJECTED. The callback-guard candidate passed offline tests and was TEMPORARILY loaded twice on the real S55, followed each time by verified restoration of the OEM library. It is NOT installed persistently. The reference S55 has NO SIM; calls/SMS/data remain unvalidated.
 
 ## Confirmed live facts
 - Android 11 LineageOS 18.1 with DOOGEE/S55/S55 Oreo vendor.
@@ -36,8 +40,16 @@ The initial trap unmount failed with Device or resource busy because the RIL pro
 Follow-up real S55 harness regression: --check recognized the OEM SHA256 and a running radio service; --trial loaded the candidate for 10 seconds with stable PID and ELF mapping, followed by automatic output ORIGINAL_RIL_RESTORED. Independent non-root ADB then verified OEM SHA256 restored, service running, PHH restart_ril=false and SELinux Enforcing. The --recover action remains available for interrupted trials. Both trials were time-bounded and no persistent radio code was changed.
 
 
-## Production decision and rollback
+## Persistent radio patch: exact physical procedure and recovery
 
-**DO NOT INSTALL THE CANDIDATE IN THE STANDARD ONE-COMMAND KIT YET** and do not replace the golden vendor. The bind-mount startup and rollback smoke test has now passed on the real phone after rooted debugging was enabled. However, testing the actual original crash trigger, cellular voice, SMS, data, standby and multi-reboot stability is still required BEFORE installing a persistent vendor patch.
+**Completed on the reference phone, 11 October 2026.** TWRP 3.1.1-0 positively identified DOOGEE S55, uid 0, battery >4.2 V. Before any write, a full 536,870,912-byte vendor partition was backed up, compressed with zstd and checked against the actual device readback. Raw OEM vendor SHA256: efef359fef8f6cd6dde651e4b6e4034cbf7ec2fdc8cc83087d079e5d2dbde759. The backup lives privately in backups/device-2026-10-11/radio-research-private/vendor-pre-ril-persistent-20261011.img.zst on both Pegasus and Cloud9; DO NOT publish it.
 
-Leave persist.sys.phh.restart_ril=false; keep SELinux Enforcing and untouched boot, modem, firmware, unique radio calibration and battery undervoltage protections. Do not blindly add a radio restart loop, disable calls or flash firmware from an unrelated handset. This project does not currently warrant claiming fully repaired cellular functionality.
+The Pegasus remote controller explicitly blocked the mount command in its user-configurable blocklist. With the owner's explicit permission, only that command was temporarily enabled, and the original safety blocklist was restored. The first persistent attempt stopped at an unnecessary TWRP chcon call, safely rolling back to the OEM SHA256. The second attempt kept the same existing OEM ELF inode, remounted vendor read-write, copied in the exact verified corrected ELF, checked the unchanged SELinux vendor_file label, flushed data, remounted vendor read-only and verified patched SHA256: f47a4248174b4f375d82ccf1a83fc5bb4bcdea0d8594a7904195a37f4b9ac4f0.
+
+An independent TWRP check confirmed the vendor mount was read-only, corrected RIL hash and original MicroArray fingerprint hash. **Two subsequent Android boots independently verified the corrected ELF persisted**, ril-proxy running and daemon PID stable, the two radio HIDL slots, PHH restart_ril=false, SELinux Enforcing, fingerprint HAL alive and no new observed native crash.
+
+**What is not certified:** No SIM was installed during this work; incoming/outgoing calls, SMS, mobile data, USSD, VoLTE, signal transitions and long unplugged standby still need real-world acceptance testing. A one-byte null guard protects the documented indication-callback fault path but cannot prove all modem paths error-free. Deep-discharge battery recovery is unrelated and not addressed here.
+
+**Installation package status:** The local one-command kit intentionally retains the previous exact OEM vendor image (for reproducibility and recovery). **Reflashing that image will REMOVE this persistent radio patch.** The public one-byte patcher remains SHA256-pinned to the OEM original; no proprietary vendor binaries are published. The updated offline INSTALL.sh --verify reports whether the target has the permanent radio guard, original RIL or an unknown revision (fail closed). The original full vendor snapshot and unpatched ELF remain private recovery material.
+
+**Never reenable persist.sys.phh.restart_ril=true** on the S55: it triggered repeated preloader/Android boot transitions in an actual earlier test. Do not alter modem/baseband/NVRAM/radio identity/calibration, disable SELinux or lower battery undervoltage protection.

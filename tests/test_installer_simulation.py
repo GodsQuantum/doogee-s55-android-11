@@ -74,6 +74,7 @@ elif args and args[0] == 'shell':
     elif 'getprop ro.product.model' in cmd: print('DOOGEE S55')
     elif 'getprop ro.hardware.fingerprint' in cmd: print(os.environ.get('S55_MOCK_FINGERPRINT_HAL', 'microarray'))
     elif 'sha256sum /vendor/lib64/libfprint-x64.so' in cmd: print(os.environ.get('S55_MOCK_FINGERPRINT_SHA', '3d89603ed3025bdc14e65d6269024c52920808c747aeb2d79417741d7cc7f9f6')+'  /vendor/lib64/libfprint-x64.so')
+    elif 'sha256sum /vendor/lib64/librilproxy.so' in cmd: print(os.environ.get('S55_MOCK_RIL_SHA', 'f47a4248174b4f375d82ccf1a83fc5bb4bcdea0d8594a7904195a37f4b9ac4f0')+'  /vendor/lib64/librilproxy.so')
     elif 'getprop ro.build.version.release' in cmd: print(os.environ.get('S55_MOCK_VERSION', '11'))
     elif 'getprop ro.twrp.version' in cmd: print(os.environ.get('S55_MOCK_TWRP', '3.1.1-0' if os.environ.get('S55_MOCK_STATE')=='recovery' else ''))
     elif 'getprop sys.boot_completed' in cmd: print('1')
@@ -136,6 +137,11 @@ sys.exit(96)
     assert result.returncode == 0, result.stderr
     assert "ANDROID11_GAPPS_THERMAL_SELINUX_VERIFIED_READ_ONLY" in result.stdout
     assert "FINGERPRINT_PATCH_AND_PHH_RETENTION_VERIFIED_READ_ONLY" in result.stdout
+    assert "S55_RIL_NULL_CALLBACK_GUARD_PERSISTENT_VERIFIED" in result.stdout
+    unpatched = run("--verify", custom_env={"S55_MOCK_RIL_SHA": "425312124514d3b87e0d8f249bb92596a2b90e6212c9484b524e761227f15f07"})
+    assert unpatched.returncode == 0 and "S55_RIL_NULL_CALLBACK_GUARD_NOT_INSTALLED_OEM_VENDOR" in unpatched.stdout
+    unknown = run("--verify", custom_env={"S55_MOCK_RIL_SHA": "0" * 64})
+    assert unknown.returncode != 0 and "Unknown /vendor/lib64/librilproxy.so" in unknown.stderr
     assert "PHYSICAL_ACCEPTANCE" in result.stdout
     for env_overrides, expected in [
         ({"S55_MOCK_FINGERPRINT_HAL": "other"}, "Unexpected fingerprint hardware"),
