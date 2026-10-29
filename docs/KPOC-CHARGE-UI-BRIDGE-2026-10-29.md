@@ -16,7 +16,7 @@ Source: `scripts/kpoc-s55-bridge.c`. Native init declaration: `scripts/s55-kpoc-
 - Reads `/sys/class/power_supply/{usb,ac}/online`, `battery/{capacity,present,status,batt_vol}` and **MTK-specific** `/sys/devices/platform/battery/ADC_Charger_Voltage`.
 - Treats 4.2–6V measured VBUS as connected even if the older `usb/online` interface is incorrectly missing/zero in KPOC; this avoids the faulty AOSP software 'charger unplugged' conclusion.
 - Only shows percentage if 0–100 with credible measured voltage and a present battery. **Never invents 0%, never claims charge when source unavailable**; shows unknown icon and **measured battery voltage in volts** instead.
-- Can draw a battery icon on `/dev/graphics/fb0` with 16- or 32-bit pixel layout. Wakes display for 6s per 60s to minimize drain. Displays status and voltage through kernel logs. **Does not write sysfs, manage current, temperature, charge thresholds, Power button, shutdown or power-off. PMIC/kernel always govern battery safety**.
+- V1 installée à 19 h 15 : dessine une batterie sur `/dev/graphics/fb0` (16/32 bpp), allume l'écran six secondes par minute et ne modifie pas sysfs ; **problème observé ensuite : écran noir encore rétroéclairé**. La V2 décrite ci-dessous remplace cette cadence par un seul affichage et écrit uniquement la luminosité LCD à zéro ; elle n'écrit jamais les valeurs de charge/batterie, ne gère pas le courant ni la coupure du PMIC.
 - Init service `s55_kpoc_bridge` in class `charger` only. Not `critical`. Android normal still starts the existing `/vendor/bin/fuelgauged`; KPOC retains the OEM `/sbin/fuelgauged_static` service already installed. Boot, LK, logo, preloader, IMEI, RIL, fingerprint, normal Android firmware untouched.
 - Experimental limitations: no on-device FB/SELinux test yet; visual draw and percentage availability depend on framebuffer rights and whether the static fuel gauge initializes. Stable USB enumeration proves KPOC isn't rebooting, **not that it electrically charges battery at 0%**.
 
@@ -41,3 +41,21 @@ Private install harness, *prepared but not executed*: `backups/device-2026-10-29
 A true physical low-battery recovery guarantee cannot be given without a full real-charge test on adequate 5V power with a measured current and a battery above the undervoltage safety threshold. An icon or Orange State warning alone does not establish actual charging performance. The UI bridge is not a charging driver.
 
 References: `docs/KPOC-FIRMWARE-DIFF-ROOT-CAUSE-2026-10-29.md`, `docs/KPOC-STATIC-FUELGAUGE-2026-10-29.md`, and official AOSP `healthd_mode_charger.cpp` (unplugged shutdown logic).
+
+## 19:23+ — Retour utilisateur du premier test et LCDv2
+
+Le propriétaire a effectué l'extinction Android manuelle puis rebranché Pegasus. Résultat : avertissement Orange State, puis **batterie verte animée**, ensuite **écran noir mais toujours rétroéclairé**. Pegasus a constaté la transition unique Preloader à 19:22:34 puis KPOC 0e8d:2008 à 19:22:54 ; aucune boucle Fastboot. Cela prouve le démarrage du mode KPOC, PAS la capacité à charger une batterie vide.
+
+La source du bridge installé (SHA 33185c51...) réveillait l'écran à `n%60==0` et appelait uniquement `FBIOBLANK=4` à `n%60==6`. Sur cette famille MediaTek, l'appel peut masquer l'image sans éteindre matériellement le rétroéclairage. Le ramdisk 2020 officiel donne le chemin du contrôleur LED : `/sys/class/leds/lcd-backlight/brightness` (init.rc lignes 598-600), cohérent avec les interfaces Linux rétroéclairage.
+
+**LCDv2 préparé uniquement sur Cloud9, NON installé :**
+
+- La source `scripts/kpoc-s55-bridge.c` n'éclaire l'écran qu'au lancement ; elle supprime le réveil périodique toutes les 60 secondes.
+- À six secondes, elle demande `FBIOBLANK(4)` puis écrit `0\n` uniquement dans `/sys/class/leds/lcd-backlight/brightness` pour éteindre physiquement le rétroéclairage. Si le fichier est absent ou la permission SELinux refuse l'écriture, logge l'échec : aucune garantie écran noir non lumineux tant que le test matériel n'a pas été fait.
+- Aucune écriture aux chemins `/sys/class/power_supply`, aucun système de contrôle du courant/tension/PMIC, aucun changement du reboot ni du noyau.
+- Test hors ligne `tests.test_kpoc_bridge` : trois tests passés (états batterie USB et ADC, extinction rétroéclairage simulée luminosité 180 et 0, pas de syscall d'extinction).
+- Image ARM64 statique candidate privée `files/candidates/kpoc-s55-bridge-LCDv2-UNINSTALLED-arm64`, SHA-256 **74db775607873a9b9e8e11ede169f87eae019e13dea8c6c25d1158f90fb53055**.
+- Script privé de mise à jour UNIQUEMENT du binaire préparé, non exécuté : `backups/device-2026-10-29-kpoc/upgrade-kpoc-bridge-lcdv2-on-pegasus.sh` ; il exige le retour normal Android, ADB root disponible, la jauge >=20%, ancienne SHA 33185c... confirmée, RC/patchs intactes, existence du chemin `lcd-backlight/brightness`. Copie le nouveau binaire dans vendor de manière atomique, restitue vendor RO et ADB non-root. Pas de redémarrage automatique.
+- Rollback ciblé privé `backups/device-2026-10-29-kpoc/rollback-kpoc-bridge-on-pegasus.sh` adapté pour supprimer l'ancienne ou la nouvelle version du bridge après vérification de SHA, sans toucher au fuelgauge KPOC original.
+
+**Prochaine action requise** : demander au propriétaire de débrancher le S55 KPOC, l'allumer sous Android et le reconnecter Pegasus. Vérifier avec `adb` le chemin de luminosité (lecture seule, jamais écrire en Android normal) avant d'installer LCDv2, puis refaire un seul test hors Android et observer l'extinction physique de l'écran.

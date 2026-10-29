@@ -1,6 +1,7 @@
 /*
  * S55 KPOC UI bridge: self-contained Linux/AArch64 static executable.
- * Keeps the stock kernel/PMIC, OEM boot and fuel gauge. Never writes sysfs.
+ * Keeps the stock kernel/PMIC, OEM boot and fuel gauge. Never writes
+ * battery/charging sysfs; only requests LCD-backlight brightness=0.
  * Show measured values ONLY; suppress fake "0%" if fuel gauge unavailable.
  * Target: MT6750/MT6755 kernel 3.18, 64-bit arm static ELF, KPOC only.
  *
@@ -15,6 +16,7 @@ typedef long i64;
 
 #define AT_FDCWD (-100)
 #define O_RDONLY 0
+#define O_WRONLY 1
 #define O_RDWR 2
 #define PROT_READ 1
 #define PROT_WRITE 2
@@ -109,6 +111,17 @@ static int to_int(const char *p){
 }
 static int get_num(const char *path){
  char b[80];if(read_string(path,b,sizeof(b))<0)return -1;return to_int(b);
+}
+/* MTK 3.18 LED interface: FBIOBLANK may blank pixels without powering
+ * down the physical backlight.  Only write display brightness=0; NEVER
+ * modify charger, battery, thermal or power-supply sysfs attributes. */
+static int disable_backlight(void){
+ static const char *path=SYSFS_ROOT "/sys/class/leds/lcd-backlight/brightness";
+ long fd=sc_open(path,O_WRONLY);
+ if(fd<0)return -1;
+ long result=sc_write((int)fd,"0\n",2);
+ sc_close((int)fd);
+ return result==2?0:-1;
 }
 
 struct State{int usb,ac,vchr,voltage,soc,valid,charging,present,connected;};
@@ -258,14 +271,22 @@ static void loop_main(void){
  for(int n=0;;n++){
   struct State s=get_state();
   if(n%6==0)sample_and_report(s);
-  /* Read-only UI: kernel and PMIC alone govern unplug and power-off.
-   * Never trust a userspace online/voltage sample to command a shutdown. */
-  if(fb && n%60==0){
+  /* Charging and shutdown decisions belong to the stock kernel/PMIC. */
+  if(fb && n==0){
    sc_ioctl(f,FBIOBLANK,(void *)0);
    render(s);
   }
-  if(fb && n%60==6){sc_ioctl(f,FBIOBLANK,(void *)4);}
-#ifdef TEST_ONE_SHOT
+  /* AOSP requests framebuffer powerdown, but this MTK driver may leave its
+   * LCD LED illuminated. Turn off physical backlight as a separate step.
+   * One animation only, never pulse an empty battery every 60 seconds. */
+  if(n==6){
+   if(fb)sc_ioctl(f,FBIOBLANK,(void *)4);
+   if(disable_backlight()==0)logmsg("s55-kpoc: LCD backlight physically off\n");
+   else logmsg("s55-kpoc: LCD backlight sysfs unavailable; fb blank only\n");
+  }
+#ifdef TEST_LCD_ONLY
+  if(n==0){disable_backlight();break;}
+#elif defined(TEST_ONE_SHOT)
   break;
 #else
   pause_ms(1000);
