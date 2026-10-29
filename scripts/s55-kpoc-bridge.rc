@@ -1,0 +1,8 @@
+# DOOGEE S55-only KPOC display bridge. ARM64 static binary, no APEX or Android HAL.
+# Diagnostic/UI only: kernel and PMIC retain all charging and power-off control.
+# Not started on normal Android boots. Experimental until live verification.
+service s55_kpoc_bridge /vendor/bin/s55_kpoc_bridge
+    class charger
+    user root
+    group root graphics input
+    seclabel u:r:charger:s0
