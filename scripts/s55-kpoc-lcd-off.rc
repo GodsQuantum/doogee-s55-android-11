@@ -1,14 +1,14 @@
-# S55 KPOC display-only helper; the bridge service starts it on exit.
+# S55 KPOC LED helper starts as class charger, no property-only dependency.
 # SELinux executable must be mtk_hal_light_exec (OEM light HAL domain).
-# Only writes /sys/class/leds/lcd-backlight/brightness 0; then terminates.
+# Reasserts LED0 at startup (0, 450, 1100 ms), then exits; no daemon.
 service s55_kpoc_lcd_off /vendor/bin/s55_kpoc_lcd_off
-    disabled
+    class charger
     oneshot
     user system
     group system graphics
     seclabel u:r:mtk_hal_light:s0
 
-# Trigger FB powerdown only after the LED helper has completed.
+# FB powerdown waits until LED helper completes all three writes.
 # The charger domain already handles fb0 IOCTLs in KPOC.
 on property:init.svc.s55_kpoc_lcd_off=stopped
     start s55_kpoc_fb_off

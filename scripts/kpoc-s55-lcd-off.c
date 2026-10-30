@@ -40,6 +40,15 @@ static long my_read(long fd,char *s,long n){return syscall3(N_READ,fd,(long)s,n)
 static long my_write(long fd,const char *s,long n){return syscall3(N_WRITE,fd,(long)s,n);}
 static void my_close(long fd){syscall3(N_CLOSE,fd,0,0);}
 static void finish(long code){syscall3(N_EXIT,code,0,0);for(;;){}}
+#if defined(__aarch64__)
+#define N_NANOSLEEP 101
+#else
+#define N_NANOSLEEP 35
+#endif
+static void pause_ms(long ms) {
+ long t[2] = {ms/1000, (ms%1000)*1000000};
+ syscall3(N_NANOSLEEP,(long)t,0,0);
+}
 static int led_off(void){
   const char *path=SYSFS_ROOT "/sys/class/leds/lcd-backlight/brightness";
   long fd=my_open(path,O_WRONLY);
@@ -62,4 +71,16 @@ static int led_off(void){
   return 0;
 #endif
 }
-void _start(void){finish(led_off());}
+/* KPOC runs without Android display HAL.
+ * Retry briefly after initial display handoff to survive late PWM/LCM setup.
+ * Finite 3-attempt startup only; no daemon, polling or extra timers.
+ * Do not suspend CPU or adjust PMIC/charging.
+ */
+void _start(void){
+ int result=led_off();
+ pause_ms(450);
+ int r=led_off(); if(r)result=r;else result=0;
+ pause_ms(650);
+ r=led_off(); if(r)result=r;else result=0;
+ finish(result);
+}
