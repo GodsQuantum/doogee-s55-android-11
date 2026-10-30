@@ -1,9 +1,9 @@
-# DOOGEE S55 MT6750/MT6755, kernel 3.18, KPOC only.
-# Original /vendor/bin/fuelgauged depends on Android linker and fails in KPOC.
-# This verified static 32-bit OEM /sbin/fuelgauged_static has no PT_INTERP.
-# Class charger is not started during a normal Android boot.
-service s55_kpoc_fuelgauged /sbin/fuelgauged_static
+# S55 KPOC: use static OEM fuel gauge with existing fuelgauged_exec label.
+# Starts in KPOC class only; does not restart if the daemon exits.
+# No change to Android normal main-class vendor fuelgauged service.
+service s55_kpoc_fuelgauged /vendor/bin/s55_kpoc_fuelgauged_static
     class charger
     user root
     group root
     seclabel u:r:fuelgauged:s0
+    oneshot

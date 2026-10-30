@@ -11,4 +11,4 @@ service s55_kpoc_bridge /vendor/bin/s55_kpoc_bridge
     oneshot
 
 on property:init.svc.s55_kpoc_bridge=stopped
-    write /sys/class/leds/lcd-backlight/brightness 0
+    start s55_kpoc_lcd_off
