@@ -59,3 +59,25 @@ La source du bridge installé (SHA 33185c51...) réveillait l'écran à `n%60==0
 - Rollback ciblé privé `backups/device-2026-10-29-kpoc/rollback-kpoc-bridge-on-pegasus.sh` adapté pour supprimer l'ancienne ou la nouvelle version du bridge après vérification de SHA, sans toucher au fuelgauge KPOC original.
 
 **Prochaine action requise** : demander au propriétaire de débrancher le S55 KPOC, l'allumer sous Android et le reconnecter Pegasus. Vérifier avec `adb` le chemin de luminosité (lecture seule, jamais écrire en Android normal) avant d'installer LCDv2, puis refaire un seul test hors Android et observer l'extinction physique de l'écran.
+
+## 2026-10-30 — LCDv3 : extinction par init, pas par le domaine charger
+
+**Test physique LCDv2 en échec** : l'utilisateur décrit Orange State, puis batterie horizontale partiellement remplie avec le chiffre « 50 », puis écran noir **toujours fortement rétroéclairé**. Pegasus voit UNE transition Preloader `0e8d:2000` à 01:38:40 puis KPOC `0e8d:2008` à 01:38:59, toujours stable à 01:48:22. Cela n'est pas un problème d'arrêt Android ; c'est un problème d'interface KPOC et de niveau d'alimentation affiché non fiable.
+
+**Diagnostic de permissions** : fichier réel sous Android `/sys/class/leds/lcd-backlight/brightness`, mode 0664 root affiché system:system, SELinux `u:object_r:sysfs:s0`. Le domaine chargeur `charger` a des permissions conditionnées aux attributs sysfs, mais l'ouverture en écriture n'est pas certifiée ; notre appel C de la version LCDv2 ne fournissait aucun résultat persistant. Le firmware vendor possède `allow init_26_0 sysfs_type:file { open write }`. Le framework init AOSP prend en charge les propriétés d'état `init.svc.NAME=stopped` après l'arrêt d'un service oneshot et les actions `on property:`. Références : [Android 11 init](https://android.googlesource.com/platform/system/core/+/refs/tags/android-11.0.0_r3/init/), [init service state](https://android.xilinx.googlesource.com/platform/system/core/+/refs/heads/main/init/service.cpp), politique `precompiled_sepolicy` OEM vérifiée en lecture seule.
+
+**Correction LCDv3 préparée, non installée** :
+- Bridge statique ARM64 natif, désormais `oneshot`, dessine une seule fois le chargeur, demande `FBIOBLANK(4)` à 6 secondes puis se termine à 8 secondes. Il n'essaie plus d'écrire lui-même dans les fichiers sysfs : il n'a aucune commande de charge, de réveil, de courant ou de shutdown.
+- RC `scripts/s55-kpoc-bridge.rc` déclare `oneshot` sur `s55_kpoc_bridge`, puis l'action init native :
+  ```ini
+  on property:init.svc.s55_kpoc_bridge=stopped
+      write /sys/class/leds/lcd-backlight/brightness 0
+  ```
+  Le processus init, pas le domaine charger, demande donc l'extinction du rétroéclairage. Ne pas ajouter de service, cron, timer ni symlink ; utiliser l'événement de fin de service existant.
+- L'affichage du pourcentage est **désactivé provisoirement** via `KPOC_SOC_CERTIFIED=0` : le « 50 » était incohérent avec les ~30 % d'Android. Le programme conserve le SOC brut pour diagnostic et affiche plutôt « ? » et la tension réelle (avec V explicite) si le noyau la publie. Ne pas inventer 0, 50 ou une charge active.
+- Nouveau binaire privé `files/candidates/kpoc-s55-bridge-initled-v3-UNINSTALLED-arm64` SHA256 **1154ba21780abd2e0261301ab81ceea4995d635df05ff3beebbcf2d05fa19238** ; nouveau RC SHA256 **24a2e39c22d04d7fd8eec28456c9bb51a9cfb297a3ba17280875d976110aea16**. Ancien binaire LCDv2 et ancien RC sauvegardés (SHA 74db7756... et 5a759cd1...). `tests/test_kpoc_bridge.py` vérifie le déclencheur, les six secondes de transition, l'extinction oneshot et absence de contrôle puissance.
+- Script privé préparé, NON exécuté `backups/device-2026-10-29-kpoc/upgrade-kpoc-bridge-initled-v3-on-pegasus.sh` ; vérifie identité/boot Android, SOC≥20, empreintes des deux fichiers et correctifs existants, SELinux Enforcing, présence du chemin sysfs en lecture seule, copie et remplacement atomique des deux fichiers (RC d'abord), `vendor` RO et `adb unroot`. Pas de flash ni redémarrage automatique.
+- Rollback privé `backups/device-2026-10-29-kpoc/rollback-kpoc-bridge-on-pegasus.sh` accepte désormais les empreintes V1/V2/V3 et ne touche pas à la jauge.
+- **Limite** : aucun test matériel v3 tant que S55 est toujours en KPOC, sans ADB. Même avec une vraie extinction écran, la recharge électrique jusqu'à 0 % n'est toujours pas certifiée, ni la jauge MTK initialisée.
+
+**Action suivante** : débrancher le S55, démarrer Android normalement puis le rebrancher à Pegasus. Installer LCDv3 seulement après préflight root, puis effectuer UN test extinction et rebranchement et observer extinction physique. Si init ne peut pas écrire sur la luminosité, étudier les traces/SELinux à partir de la prochaine session Android avant une autre modification, sans changer noyau/PMIC.
