@@ -74,15 +74,17 @@ class KpocBridgeTests(unittest.TestCase):
         self.assertIn("class charger", service)
         self.assertIn("oneshot", service)
         self.assertIn("start s55_kpoc_lcd_off", property_action)
-        self.assertIn("LED OFF must precede FB powerdown", source)
+        self.assertIn("black -> LED OFF -> framebuffer OFF", source)
         self.assertIn("service s55_kpoc_lcd_off /vendor/bin/s55_kpoc_lcd_off", (ROOT / "scripts/s55-kpoc-lcd-off.rc").read_text())
         self.assertNotIn("on charger", rc)
-        self.assertIn("KPOC_SOC_CERTIFIED 0", source)
+        self.assertNotIn("glyphs[", source)
+        self.assertNotIn("glyph(", source)
+        self.assertIn("rect(0,0,width,height,pack(0,0,0));", source)
         self.assertNotIn("disable_backlight", source)
         self.assertNotIn("O_WRONLY", source)
         self.assertNotIn("n%60==0", source)
 
-        # Fast simulated eight-heartbeat run (does not access a phone).
+        # One-shot silent bridge terminates immediately (no animation).
         with tempfile.TemporaryDirectory(prefix="s55-kpoc-timer-") as tmp:
             exe = pathlib.Path(tmp) / "timer"
             args = [
@@ -96,9 +98,9 @@ class KpocBridgeTests(unittest.TestCase):
             ]
             subprocess.run(args, check=True, capture_output=True)
             result = subprocess.run([str(exe)], check=True, capture_output=True, text=True, timeout=2)
-            self.assertIn("s55-kpoc: animation completed;", result.stdout)
-            self.assertEqual(result.stdout.count("animation completed"), 1)
-            self.assertEqual(result.stdout.count("s55-kpoc: usb="), 2)
+            self.assertIn("s55-kpoc: no visual charge UI;", result.stdout)
+            self.assertEqual(result.stdout.count("no visual charge UI"), 1)
+            self.assertEqual(result.stdout.count("s55-kpoc: usb="), 1)
 
 if __name__ == "__main__":
     unittest.main()

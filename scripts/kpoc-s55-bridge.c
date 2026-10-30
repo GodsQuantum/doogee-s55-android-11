@@ -1,8 +1,8 @@
 /*
- * S55 KPOC UI bridge: self-contained Linux/AArch64 static executable.
- * Keeps the stock kernel/PMIC, OEM boot and fuel gauge. Never writes
- * battery/charging sysfs; LCD powerdown is delegated to Android init.
- * Show measured values ONLY; suppress fake "0%" if fuel gauge unavailable.
+ * S55 silent KPOC bridge: self-contained Linux/AArch64 static executable.
+ * Keeps stock kernel/PMIC, OEM boot and fuel gauge, no battery drawing.
+ * Paint black immediately then let Android init stop LED before FB powerdown.
+ * No battery sysfs writes, no pseudo-SOC or animation.
  * Target: MT6750/MT6755 kernel 3.18, 64-bit arm static ELF, KPOC only.
  *
  * No libc, linker, APEX, Android HAL or dynamic services.
@@ -75,7 +75,6 @@ static long sc_write(int fd,const char *p,u64 n){return call6(N_WRITE,fd,(long)p
 static long sc_ioctl(int fd,long op,void *buf){return call6(N_IOCTL,fd,op,(long)buf,0,0,0);}
 static void *sc_mmap(int fd,u64 len){return (void *)call6(N_MMAP,0,len,PROT_READ|PROT_WRITE,MAP_SHARED,fd,0);}
 static void sc_unmap(void *p,u64 n){call6(N_MUNMAP,(long)p,n,0,0,0,0);}
-static void pause_ms(u64 ms){i64 tm[2]={(i64)(ms/1000),(i64)((ms%1000)*1000000)};call6(N_NANOSLEEP,(long)tm,0,0,0,0,0);}
 static void terminate(int code){call6(N_EXIT,code,0,0,0,0,0);for(;;){}}
 static u64 slen(const char *s){u64 i=0;while(s[i]&&i<1024)i++;return i;}
 static void logmsg(const char *s){
@@ -173,68 +172,15 @@ static void rect(int x,int y,int w,int h,u32 c){
  if(w<=0||h<=0)return;
  for(int yy=y;yy<y+h;yy++)for(int xx=x;xx<x+w;xx++)pixel(xx,yy,c);
 }
-static const u8 glyphs[14][7]={
- {14,17,19,21,25,17,14}, // 0
- {4,12,4,4,4,4,14},
- {14,17,1,2,4,8,31},
- {30,1,1,14,1,1,30},
- {2,6,10,18,31,2,2},
- {31,16,16,30,1,1,30},
- {14,16,16,30,17,17,14},
- {31,1,2,4,8,8,8},
- {14,17,17,14,17,17,14},
- {14,17,17,15,1,1,14},
- {0,0,0,0,0,12,12}, // dot
- {0,0,31,0,31,0,0}, // equal
- {14,17,1,2,4,0,4}, // '?'
- {17,17,17,17,17,10,4} // 'V'
-};
-static void glyph(int x,int y,int digit,int scale,u32 c){
- if(digit<0||digit>13)return;
- for(int yy=0;yy<7;yy++)for(int xx=0;xx<5;xx++){
-  if(glyphs[digit][yy]&(1u<<(4-xx)))rect(x+xx*scale,y+yy*scale,scale,scale,c);
- }
-}
-static void render(struct State s){
+/* KPOC graphic is deliberately BLACK. The native fuel gauge continues to
+ * run in the kernel; rendering a second percentage or voltage is unnecessary.
+ * Do not draw an invented battery icon. This replaces the full old UI. */
+static void render(struct State unused){
+ (void)unused;
  if(!fb)return;
- u32 background=pack(8,14,20),outline=pack(185,197,205);
- u32 fill=s.connected?pack(45,194,119):pack(198,77,77);
- u32 text=pack(238,242,245);
  int width=(int)fv.xres,height=(int)fv.yres;
  if(width>4096||height>4096)return;
- rect(0,0,width,height,background);
- int bw=width*58/100,bh=height*14/100;
- if(bw<70)bw=70;if(bh<30)bh=30;
- int x=(width-bw)/2,y=(height-bh)/2;
- rect(x,y,bw,bh,outline);
- rect(x+5,y+5,bw-10,bh-10,background);
- rect(x+bw,y+bh/4,bw/18,bh/2,outline);
- if(KPOC_SOC_CERTIFIED && s.valid){
-  int inside=(bw-16)*s.soc/100;
-  if(inside>0)rect(x+8,y+8,inside,bh-16,fill);
- }
- int scale=width/75;if(scale<2)scale=2;if(scale>9)scale=9;
- int line_w=4*6*scale;
- int tx=(width-line_w)/2,ty=y+bh+24;
- if(KPOC_SOC_CERTIFIED && s.valid){
-  int percent=s.soc;
-  glyph(tx,ty,(percent/10)%10,scale,text);
-  glyph(tx+6*scale,ty,percent%10,scale,text);
- }else{
-  glyph(tx+6*scale,ty,12,scale,text);
- }
- /* Independently show true battery voltage when available: e.g. 3.77 V.
-  * This remains useful when MTK fuel gauge reports an invalid percentage. */
- if(s.voltage>=2800000&&s.voltage<=4600000){
-  int centivolts=(s.voltage+5000)/10000;
-  int vscale=scale>2?scale-1:scale;
-  int vx=(width-5*6*vscale)/2,vy=ty+9*scale;
-  glyph(vx,vy,centivolts/100,vscale,text);
-  glyph(vx+6*vscale,vy,10,vscale,text);
-  glyph(vx+12*vscale,vy,(centivolts/10)%10,vscale,text);
-  glyph(vx+18*vscale,vy,centivolts%10,vscale,text);
-  glyph(vx+24*vscale,vy,13,vscale,text); // volts, not an invented percentage
- }
+ rect(0,0,width,height,pack(0,0,0));
 }
 static void sample_and_report(struct State s){
  char line[140];int at=0;
@@ -261,33 +207,16 @@ static void loop_main(void){
    if((i64)p>=0){fb=(u8 *)p;fblen=ff.smem_len;}
   }
  }
- for(int n=0;;n++){
-  struct State s=get_state();
-  if(n%6==0)sample_and_report(s);
-  /* Charging and shutdown decisions belong to the stock kernel/PMIC. */
-  if(fb && n==0){
-   sc_ioctl(f,FBIOBLANK,(void *)0);
-   render(s);
-  }
-  /* OEM MTK sequence MUST turn LED off before FBIOBLANK(4):
-   * primary_display_setbacklight() can ignore brightness if DISP_SLEPT.
-   * The bridge exits at n=8, then init starts the light-domain LED helper;
-   * after it exits, init starts a charger-domain FB helper. Never reverse.
-   */
-  if(n==6){
-   logmsg("s55-kpoc: animation completed; LED OFF must precede FB powerdown\n");
-  }
-#ifdef TEST_ONE_SHOT
-  break;
-#else
-  if(n>=8)break; /* oneshot exits; init.svc stopped triggers sysfs LED=0 */
-#ifdef TEST_TIMED_ONESHOT
-  pause_ms(1);
-#else
-  pause_ms(1000);
-#endif
-#endif
+ /* Paint black at once, then exit so init triggers LED0 -> FBIOBLANK.
+  * No animation, no delay, no CPU autosuspend, no charge control.
+  * LK and its Orange State screen execute before this kernel process. */
+ struct State state=get_state();
+ sample_and_report(state);
+ if(fb){
+  sc_ioctl(f,FBIOBLANK,(void *)0);
+  render(state);
  }
+ logmsg("s55-kpoc: no visual charge UI; black -> LED OFF -> framebuffer OFF\n");
  if(fb)sc_unmap(fb,fblen);
  if(f>=0)sc_close(f);
 }

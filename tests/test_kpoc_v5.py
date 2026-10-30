@@ -22,7 +22,7 @@ class V5OemOrderTests(unittest.TestCase):
         self.assertIn("    disabled\n    oneshot",fb)
         self.assertIn("seclabel u:r:charger:s0",fb)
         self.assertIn("seclabel u:r:mtk_hal_light:s0",led)
-        self.assertIn("if(n==6){\n   logmsg(",source)
+        self.assertIn("no visual charge UI; black -> LED OFF -> framebuffer OFF",source)
         self.assertNotIn("if(fb)sc_ioctl(f,FBIOBLANK,(void *)4);",source)
         self.assertIn("FBIOBLANK,4",fbsrc)
         self.assertIn("lcd-backlight/brightness",(ROOT/"scripts/kpoc-s55-lcd-off.c").read_text())
