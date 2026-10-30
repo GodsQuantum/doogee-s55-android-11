@@ -66,30 +66,37 @@ class KpocBridgeTests(unittest.TestCase):
             self.assertIn("valid=0", run())
 
     @unittest.skipUnless(CC, "clang not installed")
-    def test_backlight_off_even_when_initial_brightness_zero(self):
-        # Isolated tempfile mock: never addresses a real display.
-        with tempfile.TemporaryDirectory(prefix="s55-kpoc-lcd-") as tmp:
-            root = pathlib.Path(tmp)
-            led = root / "sys/class/leds/lcd-backlight/brightness"
-            led.parent.mkdir(parents=True, exist_ok=True)
-            exe = root / "lcd-test"
+    def test_init_delegated_backlight_and_oneshot_timing(self):
+        rc = (ROOT / "scripts/s55-kpoc-bridge.rc").read_text()
+        source = SOURCE.read_text()
+        service, property_action = rc.split("on property:init.svc.s55_kpoc_bridge=stopped\n", 1)
+        self.assertIn("service s55_kpoc_bridge /vendor/bin/s55_kpoc_bridge", service)
+        self.assertIn("class charger", service)
+        self.assertIn("oneshot", service)
+        self.assertIn("write /sys/class/leds/lcd-backlight/brightness 0", property_action)
+        self.assertNotIn("on charger", rc)
+        self.assertIn("KPOC_SOC_CERTIFIED 0", source)
+        self.assertNotIn("disable_backlight", source)
+        self.assertNotIn("O_WRONLY", source)
+        self.assertNotIn("n%60==0", source)
+
+        # Fast simulated eight-heartbeat run (does not access a phone).
+        with tempfile.TemporaryDirectory(prefix="s55-kpoc-timer-") as tmp:
+            exe = pathlib.Path(tmp) / "timer"
             args = [
                 CC, "--target=x86_64-linux-gnu", "-Os", "-static",
                 "-fno-stack-protector", "-fno-builtin", "-ffreestanding",
                 "-nostdlib", "-fuse-ld=lld", "-Wl,-e,_start",
                 "-Wl,--build-id=none", "-Wall", "-Wextra", "-Werror",
-                "-Wno-unused-function", "-DTEST_LCD_ONLY",
-                f'-DSYSFS_ROOT="{root}"', '-DFB_PATH="/dev/null"',
-                str(SOURCE), "-o", str(exe),
+                "-Wno-unused-function", "-DTEST_TIMED_ONESHOT",
+                '-DFB_PATH="/dev/null"',
+                str(SOURCE), "-o", str(exe)
             ]
             subprocess.run(args, check=True, capture_output=True)
-            for initial in ("180\n", "0\n"):
-                led.write_text(initial)
-                subprocess.run([str(exe)], check=True, capture_output=True)
-                # Sysfs writes are command-like. Regular mock files do not truncate.
-                self.assertTrue(led.read_text().startswith("0\n"))
-            self.assertIn("if(n==6)", SOURCE.read_text())
-            self.assertNotIn("n%60==0", SOURCE.read_text())
+            result = subprocess.run([str(exe)], check=True, capture_output=True, text=True, timeout=2)
+            self.assertIn("s55-kpoc: framebuffer blank requested;", result.stdout)
+            self.assertEqual(result.stdout.count("framebuffer blank requested"), 1)
+            self.assertEqual(result.stdout.count("s55-kpoc: usb="), 2)
 
 if __name__ == "__main__":
     unittest.main()

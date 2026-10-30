@@ -1,8 +1,14 @@
-# DOOGEE S55-only KPOC display bridge. ARM64 static binary, no APEX or Android HAL.
-# Diagnostic/UI only: kernel and PMIC retain all charging and power-off control.
-# Not started on normal Android boots. Experimental until live verification.
+# DOOGEE S55 KPOC only: proprietary GSI/MTK charge display bridge.
+# Bridge is deliberately oneshot: draws battery for 6s then exits after 8s.
+# When init sets init.svc.s55_kpoc_bridge=stopped, built-in write executes in
+# init SELinux domain, avoiding charger-domain denial on generic sysfs label.
+# Only LCD brightness is written. Never touch charge safety or thermals.
 service s55_kpoc_bridge /vendor/bin/s55_kpoc_bridge
     class charger
     user root
     group root graphics input
     seclabel u:r:charger:s0
+    oneshot
+
+on property:init.svc.s55_kpoc_bridge=stopped
+    write /sys/class/leds/lcd-backlight/brightness 0
