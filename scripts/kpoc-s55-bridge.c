@@ -1,7 +1,7 @@
 /*
  * S55 KPOC UI bridge: self-contained Linux/AArch64 static executable.
  * Keeps the stock kernel/PMIC, OEM boot and fuel gauge. Never writes
- * battery/charging sysfs; only requests LCD-backlight brightness=0.
+ * battery/charging sysfs; LCD powerdown is delegated to Android init.
  * Show measured values ONLY; suppress fake "0%" if fuel gauge unavailable.
  * Target: MT6750/MT6755 kernel 3.18, 64-bit arm static ELF, KPOC only.
  *
@@ -16,7 +16,6 @@ typedef long i64;
 
 #define AT_FDCWD (-100)
 #define O_RDONLY 0
-#define O_WRONLY 1
 #define O_RDWR 2
 #define PROT_READ 1
 #define PROT_WRITE 2
@@ -82,7 +81,7 @@ static u64 slen(const char *s){u64 i=0;while(s[i]&&i<1024)i++;return i;}
 static void logmsg(const char *s){
  long fd=sc_open("/dev/kmsg",O_RDWR);
  if(fd>=0){sc_write((int)fd,s,slen(s));sc_close((int)fd);}
-#ifdef TEST_ONE_SHOT
+#if defined(TEST_ONE_SHOT) || defined(TEST_TIMED_ONESHOT)
  sc_write(1,s,slen(s));
 #endif
 }
@@ -112,18 +111,10 @@ static int to_int(const char *p){
 static int get_num(const char *path){
  char b[80];if(read_string(path,b,sizeof(b))<0)return -1;return to_int(b);
 }
-/* MTK 3.18 LED interface: FBIOBLANK may blank pixels without powering
- * down the physical backlight.  Only write display brightness=0; NEVER
- * modify charger, battery, thermal or power-supply sysfs attributes. */
-static int disable_backlight(void){
- static const char *path=SYSFS_ROOT "/sys/class/leds/lcd-backlight/brightness";
- long fd=sc_open(path,O_WRONLY);
- if(fd<0)return -1;
- long result=sc_write((int)fd,"0\n",2);
- sc_close((int)fd);
- return result==2?0:-1;
-}
-
+/* 50% was a fabricated KPOC fallback on this device while Android read 30%.
+ * Keep raw SOC for diagnostics but do not display an unvalidated KPOC gauge.
+ * Remove this guard only after native KPOC gauge initialization is measured. */
+#define KPOC_SOC_CERTIFIED 0
 struct State{int usb,ac,vchr,voltage,soc,valid,charging,present,connected;};
 static struct State get_state(void){
  struct State s;
@@ -182,7 +173,7 @@ static void rect(int x,int y,int w,int h,u32 c){
  if(w<=0||h<=0)return;
  for(int yy=y;yy<y+h;yy++)for(int xx=x;xx<x+w;xx++)pixel(xx,yy,c);
 }
-static const u8 glyphs[13][7]={
+static const u8 glyphs[14][7]={
  {14,17,19,21,25,17,14}, // 0
  {4,12,4,4,4,4,14},
  {14,17,1,2,4,8,31},
@@ -195,10 +186,11 @@ static const u8 glyphs[13][7]={
  {14,17,17,15,1,1,14},
  {0,0,0,0,0,12,12}, // dot
  {0,0,31,0,31,0,0}, // equal
- {14,17,1,2,4,0,4} // '?'
+ {14,17,1,2,4,0,4}, // '?'
+ {17,17,17,17,17,10,4} // 'V'
 };
 static void glyph(int x,int y,int digit,int scale,u32 c){
- if(digit<0||digit>12)return;
+ if(digit<0||digit>13)return;
  for(int yy=0;yy<7;yy++)for(int xx=0;xx<5;xx++){
   if(glyphs[digit][yy]&(1u<<(4-xx)))rect(x+xx*scale,y+yy*scale,scale,scale,c);
  }
@@ -217,14 +209,14 @@ static void render(struct State s){
  rect(x,y,bw,bh,outline);
  rect(x+5,y+5,bw-10,bh-10,background);
  rect(x+bw,y+bh/4,bw/18,bh/2,outline);
- if(s.valid){
+ if(KPOC_SOC_CERTIFIED && s.valid){
   int inside=(bw-16)*s.soc/100;
   if(inside>0)rect(x+8,y+8,inside,bh-16,fill);
  }
  int scale=width/75;if(scale<2)scale=2;if(scale>9)scale=9;
  int line_w=4*6*scale;
  int tx=(width-line_w)/2,ty=y+bh+24;
- if(s.valid){
+ if(KPOC_SOC_CERTIFIED && s.valid){
   int percent=s.soc;
   glyph(tx,ty,(percent/10)%10,scale,text);
   glyph(tx+6*scale,ty,percent%10,scale,text);
@@ -241,6 +233,7 @@ static void render(struct State s){
   glyph(vx+6*vscale,vy,10,vscale,text);
   glyph(vx+12*vscale,vy,(centivolts/10)%10,vscale,text);
   glyph(vx+18*vscale,vy,centivolts%10,vscale,text);
+  glyph(vx+24*vscale,vy,13,vscale,text); // volts, not an invented percentage
  }
 }
 static void sample_and_report(struct State s){
@@ -281,15 +274,17 @@ static void loop_main(void){
    * One animation only, never pulse an empty battery every 60 seconds. */
   if(n==6){
    if(fb)sc_ioctl(f,FBIOBLANK,(void *)4);
-   if(disable_backlight()==0)logmsg("s55-kpoc: LCD backlight physically off\n");
-   else logmsg("s55-kpoc: LCD backlight sysfs unavailable; fb blank only\n");
+   logmsg("s55-kpoc: framebuffer blank requested; init will power off LCD LED on service exit\n");
   }
-#ifdef TEST_LCD_ONLY
-  if(n==0){disable_backlight();break;}
-#elif defined(TEST_ONE_SHOT)
+#ifdef TEST_ONE_SHOT
   break;
 #else
+  if(n>=8)break; /* oneshot exits; init.svc stopped triggers sysfs LED=0 */
+#ifdef TEST_TIMED_ONESHOT
+  pause_ms(1);
+#else
   pause_ms(1000);
+#endif
 #endif
  }
  if(fb)sc_unmap(fb,fblen);
