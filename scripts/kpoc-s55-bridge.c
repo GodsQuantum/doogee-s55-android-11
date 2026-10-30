@@ -269,12 +269,13 @@ static void loop_main(void){
    sc_ioctl(f,FBIOBLANK,(void *)0);
    render(s);
   }
-  /* AOSP requests framebuffer powerdown, but this MTK driver may leave its
-   * LCD LED illuminated. Turn off physical backlight as a separate step.
-   * One animation only, never pulse an empty battery every 60 seconds. */
+  /* OEM MTK sequence MUST turn LED off before FBIOBLANK(4):
+   * primary_display_setbacklight() can ignore brightness if DISP_SLEPT.
+   * The bridge exits at n=8, then init starts the light-domain LED helper;
+   * after it exits, init starts a charger-domain FB helper. Never reverse.
+   */
   if(n==6){
-   if(fb)sc_ioctl(f,FBIOBLANK,(void *)4);
-   logmsg("s55-kpoc: framebuffer blank requested; init will power off LCD LED on service exit\n");
+   logmsg("s55-kpoc: animation completed; LED OFF must precede FB powerdown\n");
   }
 #ifdef TEST_ONE_SHOT
   break;
