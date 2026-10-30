@@ -74,6 +74,7 @@ class KpocBridgeTests(unittest.TestCase):
         self.assertIn("class charger", service)
         self.assertIn("oneshot", service)
         self.assertIn("start s55_kpoc_lcd_off", property_action)
+        self.assertIn("LED OFF must precede FB powerdown", source)
         self.assertIn("service s55_kpoc_lcd_off /vendor/bin/s55_kpoc_lcd_off", (ROOT / "scripts/s55-kpoc-lcd-off.rc").read_text())
         self.assertNotIn("on charger", rc)
         self.assertIn("KPOC_SOC_CERTIFIED 0", source)
@@ -95,8 +96,8 @@ class KpocBridgeTests(unittest.TestCase):
             ]
             subprocess.run(args, check=True, capture_output=True)
             result = subprocess.run([str(exe)], check=True, capture_output=True, text=True, timeout=2)
-            self.assertIn("s55-kpoc: framebuffer blank requested;", result.stdout)
-            self.assertEqual(result.stdout.count("framebuffer blank requested"), 1)
+            self.assertIn("s55-kpoc: animation completed;", result.stdout)
+            self.assertEqual(result.stdout.count("animation completed"), 1)
             self.assertEqual(result.stdout.count("s55-kpoc: usb="), 2)
 
 if __name__ == "__main__":

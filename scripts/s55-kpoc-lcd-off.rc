@@ -7,3 +7,8 @@ service s55_kpoc_lcd_off /vendor/bin/s55_kpoc_lcd_off
     user system
     group system graphics
     seclabel u:r:mtk_hal_light:s0
+
+# Trigger FB powerdown only after the LED helper has completed.
+# The charger domain already handles fb0 IOCTLs in KPOC.
+on property:init.svc.s55_kpoc_lcd_off=stopped
+    start s55_kpoc_fb_off
