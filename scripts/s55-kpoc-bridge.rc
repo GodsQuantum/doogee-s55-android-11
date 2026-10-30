@@ -1,6 +1,6 @@
 # DOOGEE S55 KPOC only: proprietary GSI/MTK charge display bridge.
-# OEM order: finish animation -> LED0 in MTK light domain -> FBIOBLANK(4).
-# Bridge oneshot exits after 8s; LCD helper starts first on exit.
+# OEM order: BLACK immediately -> LED0 in MTK light domain -> FBIOBLANK(4).
+# Bridge oneshot exits immediately; LCD helper starts first on exit.
 # Do not set backlight after the framebuffer becomes DISP_SLEPT.
 # Power key, charger current and thermal protection stay with stock kernel.
 service s55_kpoc_bridge /vendor/bin/s55_kpoc_bridge
