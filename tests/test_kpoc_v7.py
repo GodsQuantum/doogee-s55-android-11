@@ -11,6 +11,8 @@ class ChargingLEDV7Tests(unittest.TestCase):
     def test_charger_class_unconditional(self):
         rc=(ROOT/"scripts/s55-kpoc-lcd-off.rc").read_text()
         self.assertIn("service s55_kpoc_lcd_off /vendor/bin/s55_kpoc_lcd_off",rc)
+        self.assertIn("on init\n    chown system system /sys/class/leds/lcd-backlight/brightness\n    chmod 0664 /sys/class/leds/lcd-backlight/brightness",rc)
+        self.assertLess(rc.index("on init"),rc.index("service s55_kpoc_lcd_off"))
         self.assertIn("    class charger",rc)
         self.assertNotIn("\n    disabled\n",rc)
         self.assertIn("    oneshot",rc)
