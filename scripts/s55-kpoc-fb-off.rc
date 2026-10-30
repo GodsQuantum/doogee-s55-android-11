@@ -1,0 +1,8 @@
+# KPOC only. Triggered AFTER LED helper exits.
+# Charger SELinux domain is already permitted framebuffer ioctl by bridge v4.
+service s55_kpoc_fb_off /vendor/bin/s55_kpoc_fb_off
+    disabled
+    oneshot
+    user root
+    group root graphics
+    seclabel u:r:charger:s0
