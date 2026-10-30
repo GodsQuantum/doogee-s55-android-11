@@ -1,0 +1,9 @@
+# S55 KPOC display-only helper; the bridge service starts it on exit.
+# SELinux executable must be mtk_hal_light_exec (OEM light HAL domain).
+# Only writes /sys/class/leds/lcd-backlight/brightness 0; then terminates.
+service s55_kpoc_lcd_off /vendor/bin/s55_kpoc_lcd_off
+    disabled
+    oneshot
+    user system
+    group system graphics
+    seclabel u:r:mtk_hal_light:s0
