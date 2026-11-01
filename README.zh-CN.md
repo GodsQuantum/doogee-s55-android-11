@@ -61,6 +61,7 @@ bash scripts/build-s55-lineage18-kit.sh
 | **指纹 MicroArray** | **已在参考 S55 上实测成功**：MicroArray 补丁与 PHH 保留机制配合使用，重启后指纹仍能解锁 |
 | **电池读数** | Android 能获得真实电压与温度，不使用虚假固定数值 |
 | **热管理** | CPU、GPU、电池、机身温度正常上报，SELinux 保持 **Enforcing** |
+| **关机充电背光（KPOC）** | 参考 S55 在 v10 下显示纵向标志后背光完全熄灭（2026-11-01，用户实测）；实际充电增量和其他硬件批次尚未验证。[技术说明](docs/KPOC-BACKLIGHT-OFF-2026-11.md) |
 | **传感器与手势** | 适配旧版 MediaTek 供应商库 |
 | **续航设置** | 电量降至 25% 自动启用 Android 原生省电模式 |
 | **用户数据** | 修复 Android 11 下的数据分区与 vendor CE/DE 初始化 |

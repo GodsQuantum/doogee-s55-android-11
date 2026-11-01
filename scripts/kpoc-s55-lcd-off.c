@@ -1,7 +1,7 @@
 /*
  * DOOGEE S55 KPOC LCD-off helper.
  * Execute only from KPOC init in existing MediaTek mtk_hal_light domain.
- * One-shot LED brightness=0. Does not touch PMIC, charge or suspend.
+ * One-shot low-level PWM transition brightness 1 -> 0. Does not touch PMIC, charge or suspend.
  * OFFLINE TEST FIRST. Run only with correct SELinux executable label.
  */
 typedef unsigned long u64;
@@ -51,11 +51,22 @@ static void pause_ms(long ms) {
 }
 static int led_off(void){
   const char *path=SYSFS_ROOT "/sys/class/leds/lcd-backlight/brightness";
+  /* MediaTek DISP_PWM may ignore duplicate brightness=0 requests.
+   * Force a real 1->0 edge and let asynchronous LED work run before 0.
+   * This is KPOC-only: tiny 1/255 pulse, followed by verified zero.
+   */
   long fd=my_open(path,O_WRONLY);
   if(fd<0)return 10;
-  long n=my_write(fd,"0\n",2);
+  long n=my_write(fd,"1\n",2);
+  my_close(fd);
+  if(n!=2)return 15;
+  pause_ms(90);
+  fd=my_open(path,O_WRONLY);
+  if(fd<0)return 10;
+  n=my_write(fd,"0\n",2);
   my_close(fd);
   if(n!=2)return 11;
+  pause_ms(35);
   fd=my_open(path,O_RDONLY);
   if(fd<0)return 12;
   char b[16];
