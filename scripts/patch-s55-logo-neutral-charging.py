@@ -72,10 +72,12 @@ def neutral_bitmap():
             else:raw[a:a+4]=bytes((151,151,151,255))
     return bytes(raw)
 
-def repack(part):
+def repack(part, replacement=None):
+    if replacement is None: replacement=neutral_bitmap()
+    if len(replacement)!=PIXELS: raise ValueError("Invalid replacement bitmap size")
     original=unpack(part)
     compressed=list(original)
-    compressed[LOW_BATTERY_INDEX]=zlib.compress(neutral_bitmap(),9)
+    compressed[LOW_BATTERY_INDEX]=zlib.compress(replacement,9)
     offsets=[];position=8+SPRITES*4
     for blob in compressed:
         offsets.append(position)
@@ -96,7 +98,7 @@ def repack(part):
         hi=OUTER+(spans[i+1] if i+1<n else total)
         v=zlib.decompress(out[lo:hi])
         if i==LOW_BATTERY_INDEX:
-            assert v==neutral_bitmap()
+            assert v==replacement
         else:
             assert v==zlib.decompress(original[i])
     assert out[:4]==part[:4] and out[8:OUTER]==part[8:OUTER]
