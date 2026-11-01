@@ -61,6 +61,7 @@ Le mode --recovery-check vérifie localement la GPT et les neuf sauvegardes d’
 | **Empreinte MicroArray** | **Déverrouillage par empreinte réussi après redémarrage**, confirmé physiquement sur le S55 de référence (correctif MicroArray + rétention PHH) |
 | **Batterie** | Tension et température réelles remontées à Android |
 | **Thermique** | Températures CPU, GPU, batterie et châssis ; SELinux **Enforcing** |
+| **Rétroéclairage en charge téléphone éteint (KPOC)** | Logo portrait puis extinction totale observés sur le S55 de référence avec la v10 (01/11/2026). Charge nette et autres variantes matérielles non certifiées. [Note technique](docs/KPOC-BACKLIGHT-OFF-2026-11.md) |
 | **Capteurs et gestes** | Correctifs de compatibilité des anciennes bibliothèques MediaTek |
 | **Autonomie** | Économiseur Android natif dès 25 %, sans service supplémentaire |
 | **Stockage** | Partition `/data` correctement initialisée pour Android 11 |

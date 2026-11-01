@@ -53,9 +53,9 @@ class V4Tests(unittest.TestCase):
         self.assertIn("oneshot",fg)
         self.assertIn("service s55_kpoc_lcd_off /vendor/bin/s55_kpoc_lcd_off",led)
         self.assertIn("seclabel u:r:mtk_hal_light:s0",led)
-        # Charger-class startup must not depend solely on init.svc properties.
+        # Only bridge starts automatically; LED helper waits until its completion.
         self.assertIn("class charger",led)
-        self.assertNotIn("\n    disabled\n",led)
+        self.assertIn("\n    disabled\n",led)
         self.assertIn("oneshot",led)
         self.assertNotIn("/sys/power/autosleep",c)
         self.assertNotIn("/sys/class/power_supply",c)

@@ -1,3 +1,5 @@
+> **Historical investigation (2026-10-30).** This report documents the backlight failure **before** v10. A later 2026-11-01 physical test observed successful full shutdown using a bounded PWM 1→0 transition. See [the current KPOC technical status](KPOC-BACKLIGHT-OFF-2026-11.md). Previous warnings about net charging and suspend remain valid.
+
 # DOOGEE S55 — rétroéclairage permanent en KPOC : diagnostic approfondi (30/10/2026)
 
 ## Constat matériel reproductible

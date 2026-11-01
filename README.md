@@ -62,6 +62,7 @@ Read-only --recovery-check verifies the original GPT and nine compressed backups
 | **Thermal HAL** | Real CPU, GPU, battery and case temperatures; SELinux stays **Enforcing** |
 | **Legacy peripherals** | MediaTek sensor / gesture vendor compatibility fixes applied |
 | **Battery saving** | Native Android battery saver set to 25%; no intrusive background service |
+| **Powered-off charging backlight (KPOC)** | Reference handset physically showed the full-height logo then complete backlight shutdown with v10 (2026-11-01); net charge gain and other hardware revisions still unverified. [Engineering note](docs/KPOC-BACKLIGHT-OFF-2026-11.md) |
 | **Data storage** | Android 11 vendor CE/DE provisioning and full userdata partition restored |
 
 Our reference phone was verified booting, with 100% battery, realistic thermal readings, Wi-Fi/Bluetooth, all three Google packages and functioning HAL services. **Other hardware batches may behave differently**; the installer deliberately stops on unknown GPT, recovery or files.

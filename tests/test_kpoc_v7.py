@@ -8,13 +8,14 @@ import unittest
 ROOT=pathlib.Path(__file__).resolve().parents[1]
 CC=shutil.which("clang")
 class ChargingLEDV7Tests(unittest.TestCase):
-    def test_charger_class_unconditional(self):
+    def test_charger_class_serialized_after_bridge(self):
         rc=(ROOT/"scripts/s55-kpoc-lcd-off.rc").read_text()
         self.assertIn("service s55_kpoc_lcd_off /vendor/bin/s55_kpoc_lcd_off",rc)
         self.assertIn("on init\n    chown system system /sys/class/leds/lcd-backlight/brightness\n    chmod 0664 /sys/class/leds/lcd-backlight/brightness",rc)
         self.assertLess(rc.index("on init"),rc.index("service s55_kpoc_lcd_off"))
         self.assertIn("    class charger",rc)
-        self.assertNotIn("\n    disabled\n",rc)
+        self.assertIn("\n    disabled\n",rc)
+        self.assertIn("on property:init.svc.s55_kpoc_bridge=stopped\n    start s55_kpoc_lcd_off", (ROOT/"scripts/s55-kpoc-bridge.rc").read_text())
         self.assertIn("    oneshot",rc)
         self.assertIn("    seclabel u:r:mtk_hal_light:s0",rc)
         self.assertIn("on property:init.svc.s55_kpoc_lcd_off=stopped\n    start s55_kpoc_fb_off",rc)
@@ -24,6 +25,7 @@ class ChargingLEDV7Tests(unittest.TestCase):
         self.assertIn("pause_ms(650)",src)
         self.assertNotIn("/sys/power/",src)
         self.assertNotIn("/dev/mem",src)
+    @unittest.skipUnless((ROOT/"files/candidates/kpoc-v4-stage/init.mt6755.v4.rc").is_file() and (ROOT/"files/candidates/kpoc-v7-init-LOWLOG-UNINSTALLED.rc").is_file(), "private OEM charger init snapshots not in public Git")
     def test_fg_charger_log_only(self):
         old=(ROOT/"files/candidates/kpoc-v4-stage/init.mt6755.v4.rc").read_text()
         new=(ROOT/"files/candidates/kpoc-v7-init-LOWLOG-UNINSTALLED.rc").read_text()
